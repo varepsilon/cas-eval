@@ -1,0 +1,62 @@
+body {
+    min-height: 2000px;
+    padding-top: 50px;
+}
+
+
+.bs-callout {
+    padding: 20px;
+    margin: 20px 0;
+    border: 1px solid #eee;
+    border-left-width: 5px;
+    border-radius: 3px;
+}
+
+.bs-callout h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.bs-callout-info {
+    border-left-color: #5bc0de;
+}
+
+.bs-callout-info h4 {
+    color: #5bc0de;
+}
+
+.panel-heading {
+    cursor: pointer;
+}
+
+.anchor {
+    content: "";
+    display: block;
+    height: 55px;
+    margin-top: -50px;
+    visibility: hidden;
+}
+
+#sidebar.affix {
+    position: fixed;
+    top: 70px;
+    width: 228px;
+}
+
+#sidebar-wrapper .nav .nav>li>a {
+    padding-left: 30px;
+    font-size: 12px;
+    font-weight: 400;
+    color: #999;
+}
+
+#sidebar-wrapper .nav>li>a {
+    padding-left: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #999;
+}
+
+.your_count {
+    background-color: rgba(211, 80, 255, 0.36)
+}

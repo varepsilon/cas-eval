@@ -1,0 +1,10 @@
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+<ShortName>ILPS Search Proxy</ShortName>
+<Description>
+    Search the web through the logging proxy that collects your search log to help research.
+    More at ilps-search-log.appspot.com
+</Description>
+<InputEncoding>UTF-8</InputEncoding>
+<Image width="16" height="16" type="image/x-icon">https://ilps-search-log.appspot.com/favicon.ico</Image>
+<Url type="text/html" method="get" template="https://ilps-srchproxy.science.uva.nl/search?hl=en&amp;user_id={{ user.user_id() }}&amp;q={searchTerms}"/>
+</OpenSearchDescription>

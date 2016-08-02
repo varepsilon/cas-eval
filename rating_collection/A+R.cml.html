@@ -1,0 +1,77 @@
+<!-- Attractiveness (A) -->
+<div id="A">
+    <h1>1. Attractiveness of the Document Summary</h1>
+    <div id="snippet">
+      {{snippet}}
+    </div>
+
+    <div id="questions_A">
+      <cml:radios name="main" label="Above is a summary extracted from a bigger document. Do you think examining the full document will be useful to answer the question &lt;span class=&quot;query&quot;&gt;[{{query}}]&lt;/span&gt;?" validates="required" instructions="HINT: Do not try to follow any links while answering this question, but think if following the link would be worthy." gold="true">
+        <cml:radio label="Likely, &lt;span class=&quot;answer&quot;&gt;yes&lt;/span&gt;" value="A1" />
+        <cml:radio label="Likely, &lt;span class=&quot;answer&quot;&gt;no&lt;/span&gt;" value="A0" />
+        <cml:radio label="The question is not in English" value="A-1" />
+        <cml:radio label="The summary is not in English" value="A-2" />
+      </cml:radios>
+
+      <cml:radios  name="yes_detailed" label="Why do you think the full document will be interesting?" validates="required" only-if="main:[A1]">
+        <cml:radio label="The summary suggests that I &lt;span class=&quot;answer&quot;&gt;can perform the action&lt;/span&gt; on the landing page (e.g., download or buy something)" value="A1.0"/>
+        <cml:radio label="I need to &lt;span class=&quot;answer&quot;&gt;confirm&lt;/span&gt; information already present in the summary" value="A1.1"/>
+        <cml:radio label="The summary contains only a &lt;span class=&quot;answer&quot;&gt;part&lt;/span&gt; of the answer" value="A1.2"/>
+        <cml:radio label="The summary is &lt;span class=&quot;answer&quot;&gt;unclear&lt;/span&gt;, I need to check the full document" value="A1.3"/>
+        <cml:radio label="Other" value="A1.4"/>
+      </cml:radios>
+      <cml:text name="yes_other" label="Specify the reason" validates="required minLength:5" only-if="yes_detailed:[A1.4]" />
+
+      <cml:radios name="no_detailed" label="Why do you think the full document is NOT interesting?" validates="required" only-if="main:[A0]">
+        <cml:radio label="The summary and the question talk about &lt;span class=&quot;answer&quot;&gt;different&lt;/span&gt; things" value="A0.1"/>
+        <cml:radio label="The document appears to be &lt;span class=&quot;answer&quot;&gt;not trustworthy&lt;/span&gt;" value="A0.2"/>
+        <cml:radio label="The question is already fully &lt;span class=&quot;answer&quot;&gt;answered in the summary&lt;/span&gt;" value="A0.3"/>
+        <cml:radio label="Other" value="A0.4"/>
+      </cml:radios>
+      <cml:text name="no_other" label="Specify the reason" validates="required minLength:5" only-if="no_detailed:[A0.4]" />
+
+      <cml:text name="non_english" label="Copy a non-English word from the question or summary" instructions="Are you sure it's a foreign word and not a special term?" validates="required minLength:2" only-if="main:[A-1]||main:[A-2]" />
+    </div>
+
+    <div id="transition">
+      <cml:radios class="transition" name="transition" label="Ready to proceed?" instructions="IMPORTANT: Please, double-check that you fully answered the questions above. You will not be able to change them later." validates="required" only-if="yes_detailed++(!yes_detailed:[A1.4]||yes_other)||no_detailed++(!no_detailed:[A0.4]||no_other)||non_english">
+        <cml:radio label="Yes, I'm ready to proceed." value="yes"/>
+      </cml:radios>
+    </div>
+</div>
+
+<!-- Relevance (R) -->
+
+<div id="R" style="display:none;">
+<h1>2. Full Document Relevance</h1>
+    <cml:html class="clicked">
+        <a class="clicked validates-clicked btn btn-primary btn-lg" href="{{link}}" target="_blank" style="color: white;">» Click to open the full document «</a>
+    </cml:html>
+    <div id="questions_R">
+      <cml:radios name="rel" label="Does the full document that you have just opened answer the question &lt;span class=&quot;query&quot;&gt;[{{query}}]&lt;/span&gt;?" validates="required">
+        <cml:radio label="&lt;span class=&quot;answer&quot;&gt;Perfect match!&lt;/span&gt; There is unlikely to be a better document for this question." value="R3" />
+        <cml:radio label="&lt;span class=&quot;answer&quot;&gt;Relevant document with possible differences&lt;/span&gt;. The question could be answered better." value="R2" />
+        <cml:radio label="&lt;span class=&quot;answer&quot;&gt;Marginally relevant: obvious differences&lt;/span&gt;. The document talks about a related topic, but does not answer the question." value="R1" />
+        <cml:radio label="&lt;span class=&quot;answer&quot;&gt;Irrelevant / Offtopic&lt;/span&gt;. The document talks about something else." value="R0" />
+        <cml:radio label="The document is not in English" value="R-2" />
+        <cml:radio label="Cannot open the document" value="R-3"/>
+      </cml:radios>
+
+      <cml:text label="Copy an answer from the document" validates="required minLength:2 maxLength:100" only-if="rel:[R3]||rel:[R2]" />
+
+      <cml:text name="marginally_relevant_detailed" label="Copy a few words from the document, that supports the fact that the document and the question are talking about related topics." validates="required minLength:2 maxLength:100" only-if="rel:[R1]" />
+
+     <cml:text label="What is the document talking about?" validates="required minLength:2 maxLength:50" only-if="rel:[R0]" />
+
+      <cml:text label="Copy a non-English word from the document" instructions="Are you sure it's a foreign word and not a special term?" validates="required minLength:2" only-if="rel:[R-2]" />
+
+      <cml:radios name="cannot_open_detailed" label="What happened when you click the link?" validates="required" only-if="rel:[R-3]">
+        <cml:radio label="I got an error message that webpage &lt;span class=&quot;answer&quot;&gt; cannot be reached or was not found&lt;/span&gt;" value="R-2.404" />
+        <cml:radio label="I got an error message that &lt;span class=&quot;answer&quot;&gt;access is forbidden&lt;/span&gt;" value="R-2.403" />
+        <cml:radio label="The page opens, but it &lt;span class=&quot;answer&quot;&gt;looks broken&lt;/span&gt;" value="R-2.xxx" />
+        <cml:radio label="&lt;span class=&quot;answer&quot;&gt;Link doesn't work&lt;/span&gt;. I tried to click the link, but nothing happens" value="R-2.yyy" />
+        <cml:radio label="Other error" value="R-2.0" />
+      </cml:radios>
+      <cml:text name="cannot_open_other" label="Which error did you get?" validates="required minLength:5" only-if="cannot_open_detailed:[R-2.0]" />
+    </div>
+</div>

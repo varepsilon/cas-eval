@@ -1,0 +1,23 @@
+<tr id="loading-indicator" style="display:none">
+    <td colspan="4"><img src="/img/ajax-loader.gif"/></td>
+</tr>
+
+{% for session in sessions %}
+<tr style="cursor:pointer;" class="log-item-row">
+    <td><input type="checkbox" name="tab_id" value="{{ session.id }}" id="check_{{ session.id }}"></td>
+    <td>{{ session.start_ts|format_time }}</td>
+    {% if session.is_sat %}
+        <td style="color: green">{{ session.q }}</td>
+    {% elif session.is_dsat %}
+        <td style="color: red">{{ session.q }}</td>
+    {% else %}
+        <td>{{ session.q }}</td>
+    {% endif %}
+    <td>{{ session.event_counts|tojson|truncate }}</td>
+    <td>{% if session.shared %}<span class="glyphicon glyphicon-ok"></span>{% endif %}</td>
+</tr>
+{% else %}
+<tr class="log-item-row">
+    <td colspan="4">No log entries found for selected date.</td>
+</tr>
+{% endfor %}

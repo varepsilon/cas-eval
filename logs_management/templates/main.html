@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block headstuff %}
+<link href="/css/datepicker.css" rel="stylesheet" media="screen">
+{% endblock %}
+
+{% block login %}
+<span class="navbar-form navbar-right">
+    <a class="btn btn-default" role="button" href="{{ logout_url }}">Sign out</a>
+</span>
+<p class="navbar-text navbar-right">{{ user.email() }}</p>
+{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>Manage Your Log</h1>
+    <p>Here you can manage your search log. In order to associate your data with you, you have to use the following search pattern.</p>
+    <pre id="search-pattern">https://ilps-srchproxy.science.uva.nl/search?hl=en&user_id={{ user.user_id() }}&q=</pre>
+    <div class="alert alert-info">
+        By using this search pattern you acknowledge that you are a member of
+        <a href="http://ilps.science.uva.nl/" class="alert-link">ILPS</a>.
+        Do not share your unique search string with other people (even within ILPS).
+    </div>
+    <p><a class="btn btn-default" role="button" href="/help#setup">How to set up &raquo;</a></p>
+  </div>
+</div>
+
+<div class="container">
+    <div class="row">
+    </div>
+
+    <div class="page-header">
+        <h3>
+            Your Search Sessions ({{ num_shared }} shared) {% if num_shared > 100 %}<span class="glyphicon glyphicon-thumbs-up" title="You shared more than 100 items. Good job!"></span>{% endif %}{% if num_shared > 1000 %}<span class="glyphicon glyphicon-heart-empty" title="You contributed more than 100 items. You are awesome!"></span>{% endif %} <a class="btn btn-success btn-xs" href="/leaderboard">Leaderboard &raquo;</a>
+        </h3>
+    </div>
+    <div id="datepaginator"></div>
+    <form id="sessions-list" class="form-horizontal" role="form" method="post" action="/main">
+        <input name="_csrf_token" type=hidden value="{{ csrf_token() }}">
+        <input id="form-date" name="date" type=hidden value="{{ date }}">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Sessions List
+            </div>
+            <div class="panel-body">
+                <input type="submit" class="btn btn-danger" name="delete" value="Delete" title="Delete selected queries.">
+                <input type="submit" class="btn btn-primary" name="share" value="Share this day's log" title="Click this button to make this day's log downloadable by the experiment organizers (in anonymized way).">
+                <table class="table table-hover sessions-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="col-md-3">Time</th>
+                            <th class="col-md-3">Query</th>
+                            <th class="col-md-4">Actions</th>
+                            <th>Shared</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table-body">
+                        {% include "log_table_body.html" %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block bottomstuff %}
+<!-- Required by the datepaginator -->
+<script type="text/javascript" src="/js/moment.js"></script>
+<script type="text/javascript" src="/js/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="/js/bootstrap-datepaginator.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        // Make the whole table row clickable.
+        $(".sessions-table tbody").on("click", "tr", function(event) {
+            if (event.target.type !== "checkbox") {
+                $(":checkbox", this).trigger("click");
+            }
+        });
+
+        // Share whole day's log.
+        $("input[name='share']").click(function() {
+            $(".sessions-table :checkbox").prop("checked", true);
+            var r = confirm("You are about to share all queries of the selected day with " +
+                    "the experiment organizers.\nMake sure you deleted all sensitive queries!");
+            if (r != true) {
+                $(".sessions-table :checkbox").prop("checked", false);
+            }
+            return r;
+        });
+
+        // Set up datepaginator.
+        var options = {
+            selectedDate: "{{ date }}",
+            onSelectedDateChanged: function(event, date) {
+                $(".log-item-row").hide();
+                $("#loading-indicator").show();
+                var date_str = date.format("YYYY-MM-DD");
+                $("#form-date").val(date_str);
+                $.get("/render_log?date=" + date_str,
+                        function(data) {
+                    $("#log-table-body").html(data);
+                });
+            }
+        }
+        $("#datepaginator").datepaginator(options);
+
+        // Set the search pattern placeholder according to the browser.
+        var isOpera = !!window.opera || navigator.userAgent.indexOf(" OPR/") >= 0;
+        // Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+        var isFirefox = typeof InstallTrigger !== "undefined";   // Firefox 1.0+
+        var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf("Constructor") > 0;
+        // At least Safari 3+: "[object HTMLElementConstructor]"
+        var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+        var isIE = /*@cc_on!@*/false || !!document.documentMode; // At least IE6
+
+        var placeholder = "";
+        if (isChrome) {
+            placeholder = "%s";
+        } else if (isSafari) {
+            placeholder = "@@@";
+        }
+        $("#search-pattern").html($("#search-pattern").html() + placeholder);
+    });
+</script>
+
+{% endblock %}

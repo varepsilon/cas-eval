@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="col-md-9">
+        <span class="anchor" id="setup"></span>
+        <h2>Setup</h2>
+            <p>
+                In order to start donating your search log you should head to
+                <a href="/">the main page</a>, acknowledge the rules and copy your unique
+                search pattern string. Below we describe where to put this string so that
+                you can use our proxy instead of (or in addition to) Google.
+            </p>
+        <div class="panel-group" id="accordion">
+            <span class="anchor" id="setup-chrome"></span>
+            <div class="panel panel-default">
+                <div class="panel-heading" id="heading-chrome" data-toggle="collapse" data-target="#setup-chrome-div">
+                   <h3 class="panel-title">Chrome</h3>
+                </div>
+                <div id="setup-chrome-div" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        Setting it up in Chrome is relatively easy.
+                        Unlike Safari you don't need any additional plugins for that.
+                        Here is the sequence of actions:
+                        <ul>
+                            <li>
+                                Head to the <a href="/">the main page</a> and confirm that
+                                you acknowledge the rules
+                                (i.e., that you are from <a href="http://ilps.science.uva.nl">ILPS</a>).
+                            </li>
+                            <li>
+                                There you should see your unique search pattern string.
+                                It should end with <code>q=%s</code> where <code>%s</code>
+                                is the placeholder for your query.
+                                Copy that string.
+                            </li>
+                            <li>
+                                Go to
+                                <a href="http://ilps-search-log.appspot.com">
+                                    the http version of the main page
+                                </a>.
+                                This should help
+                                Chrome to auto-discover our search proxy settings.
+                            </li>
+                            <li>
+                                Right-click (control-click) in the browser address bar and select
+                                "Edit Search Engines...":
+                                <div class="thumbnail">
+                                    <img src="/img/chrome-1.png" alt="screenshot"/>
+                                </div>
+                            </li>
+                            <li>
+                                You should see a long list of possible search engines
+                                and <code>ILPS Search Proxy</code> should be one of them with
+                                third column containing the url pattern string you copied on the step 2.
+                                You could either make it default by hovering the third column and pressing
+                                <span class="label label-info">Make default</span> button or you can set
+                                a keyword (second column) to search by
+                                typing the keyword followed by <code>Tab</code>.
+                                <div class="thumbnail">
+                                    <img src="/img/chrome-2.png" alt="screenshot"/>
+                                </div>
+                            </li>
+                            <li>
+                                If you don't see <code>ILPS Search Proxy</code> in the list of search
+                                engines, you can scroll the list to the bottom and manually add it
+                                using the search pattern string you copied on the step 2.
+                            </li>
+                            <li>
+                                In the example above, search keyword is set to <code>p</code> (2nd column)
+                                so you can search for the word "Amsterdam" by typing
+                                <code>p</code>, <code>Tab</code> and then "Amsterdam" in the browser address bar.
+                                <div class="thumbnail">
+                                    <img src="/img/chrome-3.png" alt="screenshot"/>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <span class="anchor" id="setup-safari"></span>
+            <div class="panel panel-default">
+                <div class="panel-heading" id="heading-safari" data-toggle="collapse" data-target="#setup-safari-div">
+                    <h3 class="panel-title">Safari</h3>
+                </div>
+                <div id="setup-safari-div" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        <ul>
+                            <li>
+                                Head to the <a href="/">the main page</a> and confirm that
+                                you acknowledge the rules
+                                (i.e., that you are from <a href="http://ilps.science.uva.nl">ILPS</a>).
+                            </li>
+                            <li>
+                                There you should see your unique search pattern string.
+                                It should end with <code>q=@@@</code> where <code>@@@</code>
+                                is the placeholder for your query.
+                                Copy that string.
+                            </li>
+                            <li>
+                                Then, you need to install the plugin that allows you to add
+                                custom search engines. I recommend <a href="http://www.macosxtips.co.uk/keysearch/help">KeySearch</a>.
+                            </li>
+                            <li>
+                                After you installed it you should see a magnifying glass on your
+                                Safari panel. Click on it and then click on the settings wheel inside
+                                the box that appeared and select "Edit Keywords".
+                            </li>
+                            <li>
+                                Fill the settings as shown on the screenshot, using the search pattern
+                                string that you copied on the step 2 in the "URL" field. Save the settings.
+                                <div class="thumbnail">
+                                    <img src="/img/safari-1.png" alt="screenshot"/>
+                                </div>
+                            </li>
+                            <li>
+                                If you click on the magnifying glass again and select "Settings" after
+                                clicking on the settings wheel you can specify how you initiate the search
+                                (<code>Control+S</code> by default)
+                                or can you can enable it in the regular address bar.
+                                Either way, you search the proxy by typing
+                                <code>p</code>, <code>Space</code> and then your search query.
+                                <div class="thumbnail">
+                                    <img src="/img/safari-2.png" alt="screenshot"/>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <span class="anchor" id="setup-firefox"></span>
+            <div class="panel panel-default">
+                <div class="panel-heading" id="heading-firefox" data-toggle="collapse" data-target="#setup-firefox-div">
+                    <h3 class="panel-title">Firefox</h3>
+                </div>
+                <div id="setup-firefox-div" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        Setting up in Firefox is the easiest. Unlike Chrome it does not
+                        have any problems with auto-discovering search description.
+                        <ul>
+                            <li>
+                                Head to the <a href="/">the main page</a> and confirm that
+                                you acknowledge the rules
+                                (i.e., that you are from <a href="http://ilps.science.uva.nl">ILPS</a>).
+                            </li>
+                            <li>
+                                After you logged-in you should be able to add ILPS Search Proxy
+                                from the search box menu.
+                                <div class="thumbnail">
+                                    <img src="/img/firefox-1.png" alt="screenshot"/>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <span class="anchor" id="manage"></span>
+        <h2>Managing your log</h2>
+        <p>
+            At any time you can go to the <a href="/main">manage page</a> and review your log.
+            You can select any day using the date pager or a small calendar button inside it.
+            Within each day you see the queries that you issued. If you think that
+            some queries are privacy-sensitive, you can select corresponding rows and hit
+            <input type="submit" class="btn btn-danger btn-xs" name="delete" value="Delete">
+            button. After you done reviewing you can hit
+            <input type="submit" class="btn btn-primary btn-xs" name="share"
+                value="Share this day's log">.
+            This will anonymize your log and share it with the experiment organizers.
+        </p>
+        <div class="bs-callout bs-callout-info">
+                <h4>Important</h4>
+                <p>
+                    After you shared your log you make it accessible by the experiment
+                    organizers.
+                    It will be anonymized and aggregated such that the experiment organizers
+                    cannot identify owners of the queries. Make sure you deleted
+                    private stuff <b>before</b> pressing this button.
+                </p>
+                <p>
+                    You can still delete some queries after sharing them, but make
+                    sure to notify the experiment organizers immediately
+                    in case they already started using the log.
+                </p>
+            </div>
+        <span class="anchor" id="uninstall"></span>
+        <h2>Opting-out (Uninstall)</h2>
+        <p>
+            In order to switch back to using your regular search engine,
+            go to the search engine settings and select your favourite one as the default.
+            In Safari you may also want to uninstall the extension.
+        </p>
+    </div>
+    <div class="col-md-3" id="sidebar-wrapper">
+        <ul class="nav nav-stacked" id="sidebar">
+            <li>
+                <a href="#setup" class="nav-link">Setup</a>
+                <ul class="nav nav-stacked">
+                    <li><a href="#setup-chrome" class="nav-link">Chrome</a></li>
+                    <li><a href="#setup-safari" class="nav-link">Safari</a></li>
+                    <li><a href="#setup-firefox" class="nav-link">Firefox</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#manage" class="nav-link">Managing your log</a>
+            </li>
+            <li>
+                <a href="#uninstall" class="nav-link">Opting-out (Uninstall)</a>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block bottomstuff %}
+<script>
+    function selectCollapse(id_string) {
+        $('.collapse').collapse('hide');
+        $(id_string + '-div' + '.collapse').collapse('show');
+    }
+    $(document).ready(function() {
+        $('#sidebar-wrapper').height($("#sidebar").height());
+        $('#sidebar').affix({
+            offset: { top: 0}
+        });
+        $('.collapse').collapse({'toggle': false});
+
+        location.hash && selectCollapse(location.hash);
+
+        $('a.nav-link').click(function() {
+            selectCollapse($(this).attr('href'));
+        });
+    });
+</script>
+{% endblock %}

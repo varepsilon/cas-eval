@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block login %}
+{% if not user %}
+<span class="navbar-form navbar-right">
+    <a class="btn btn-success" role="button" href="/main">Sign in</a>
+</span>
+{% endif %}
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+    <div class="row">
+    </div>
+
+    <div class="page-header">
+        <h3>
+            Sharing Leaderboard
+        </h3>
+    </div>
+    <table class="table sessions-table col-md-9">
+        <thead>
+            <tr>
+                <th class="col-md-3">Rank</th>
+                <th class="col-md-6">Number of Shared Sessions</th>
+            </tr>
+        </thead>
+        <tbody id="leaderboard-table-body">
+            {% for count, user_id in num_shared %}
+                {% if user and user.user_id() == user_id %}
+                    <tr class="your_count">
+                        <td>{{ loop.index }} (you)</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+    <hr>
+</div>
+
+{% endblock %}

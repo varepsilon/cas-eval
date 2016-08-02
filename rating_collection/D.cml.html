@@ -1,0 +1,40 @@
+<cml:checkboxes name="query" label="1. What kind of question is &lt;span class=&quot;query&quot;&gt;[{{query}}]&lt;/span&gt;?">
+    <cml:checkbox value="ambiguous" label="The question is &lt;span class=&quot;answer&quot;&gt;ambiguous&lt;/span&gt;, multiple interpretations are possible and not all of them are answered." />
+    <cml:checkbox value="bad_abandonment" label="The question  &lt;span class=&quot;answer&quot;&gt;cannot be answered&lt;/span&gt; with a short piece of text (e.g., the goal is to download or buy something)." />
+</cml:checkboxes>
+
+<h2 class="legend">2. Now look at the following text:</h2>
+<div id="snippet">
+  {{snippet}}
+</div>
+<div id="questions">
+  <cml:radios name="main" label="Does the text above answer the question &lt;span class=&quot;query&quot;&gt;[{{query}}]&lt;/span&gt;?" validates="required" gold="true">
+    <cml:instructions>
+        <u><b>IMPORTANT</b></u>: <span class="important">Look for an actual <b>answer</b>, not just matching words</span>.
+        <br />
+        <u><b>IMPORTANT</b></u>: Prefer <span class="answer">partial answer</span> to <span class="answer">full answer</span> if in doubt.
+        <br />
+        HINT: Do not try to follow any links while answering this question.
+        <br />
+    </cml:instructions>
+
+    <cml:radio label="Yes, the text contains a &lt;span class=&quot;answer&quot;&gt;full answer&lt;/span&gt; to the question (not just a word match)" value="D2" />
+    <cml:radio label="The text contains a &lt;span class=&quot;answer&quot;&gt;partial answer&lt;/span&gt; to the question (not just a word match)" value="D1" />
+    <cml:radio label="No, the text contains &lt;span class=&quot;answer&quot;&gt;no answer&lt;/span&gt; to the question" value="D0" />
+    <cml:radio label="The question is not in English" value="D-1"/>
+    <cml:radio label="The text is not in English" value="D-2"/>
+  </cml:radios>
+
+<br />
+
+  <cml:text name="yes_detailed" label="Copy an answer from the text" validates="required minLength:2 maxLength:50" only-if="main:[D2]||main:[D1]" />
+
+  <cml:radios name="no_detailed" label="Please, provide details" validates="required" only-if="main:[D0]">
+    <cml:radio label="A question like that cannot be answered with a short text" value="D0.1"/>
+    <cml:radio label="An answer is possible, but the text does not contain anything like an answer" value="D0.2"/>
+  </cml:radios>
+
+  <cml:text label="Copy a non-English word from the question or text" instructions="Are you sure it's a foreign word and not a special term?" validates="required minLength:2" only-if="main:[D-1]||main:[D-2]" />
+
+</div>
+

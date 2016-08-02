@@ -1,0 +1,4 @@
+logs_management/lib
+.DS_Store
+.ipynb_checkpoints
+*.pyc

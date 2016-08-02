@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block login %}
+{% if not user %}
+<span class="navbar-form navbar-right">
+    <a class="btn btn-success" role="button" href="/main">Sign in</a>
+</span>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>ILPS Search Log</h1>
+    <p>This website is meant to be used <b>only</b> by the members of the <a href="http://ilps.science.uva.nl/">ILPS</a> group of the University of Amsterdam.
+    You will need to sign in with your Google account credential to be able to set up the experiment and manage your log.</p>
+    <p><a class="btn btn-primary btn-lg" role="button" href="/main">Yes, I confirm that I am from ILPS &raquo;</a></p>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-5">
+      <h2>How to</h2>
+      <p>Setting up is easy and requires only a few minutes.
+      After that you will be helping us by just doing searches and occasionally giving quick
+      feedback.</p>
+      <p>You can easily opt out from the experiment at any time. Or you can switch from our logging proxy to a normal search engine back and forth without much effort.</p>
+      <p><a class="btn btn-default" role="button" href="/help">Help page &raquo;</a></p>
+    </div>
+    <div class="col-md-7">
+      <h2>Privacy</h2>
+      <p>
+          We collect your data to do research.
+          Ultimately, we want to build a model of user behavior on a Search Engine Result Page
+          and propose a new evaluation metric.
+      </p>
+      <p>
+          Your data is stored and accessed securely and your privacy is protected.
+          Only you have access to your log.
+          You can delete the queries that you consider privacy-sensitive at any time.
+      </p>
+      <p>
+          Note that we will be able to use your data <b>only after</b> you explicitly transfer
+          it to us. At this point your search log will be anonymized and shuffled so that
+          there will be no way to identify you.
+      </p>
+      <p><a class="btn btn-default" role="button" href="https://docs.google.com/document/d/1qoxTrsvp8Coj40Ydtg0PZYZT8PWw4gbYyq-KfvVQKS4/preview">More details&raquo;</a></p>
+    </div>
+  </div>
+</div> <!-- /container -->
+{% endblock %}
