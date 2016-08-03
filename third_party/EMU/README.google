@@ -1,0 +1,11 @@
+URL: http://ir-ub.mathcs.emory.edu/uFindIt/
+Version: 2010/12/12 (emu.js file modification date)
+License: GPL v2
+License File: LICENSE
+Description:
+    Oringinal code was released as part of the following publication:
+    "Guo, Q. and Agichtein, E. 2008. Exploring mouse movements for inferring
+    query intent. SIGIR. (2008), 707–708."
+Local Modifications:
+    LICENSE file has been created for compliance purposes.
+    Not included in original distribution.
