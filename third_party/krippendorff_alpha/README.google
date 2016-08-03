@@ -1,0 +1,12 @@
+URL: http://grrrr.org/data/dev/krippendorff_alpha/
+Version: 2011/06/01 (krippendorff_alpha.py file modification date)
+License: CC BY-SA 3.0
+License File: LICENSE
+Description:
+    Code to compute Krippendorff's alpha coefficient.
+    Originally posted in a blog post:
+    http://grrrr.org/2011/05/31/krippendorff_alpha-python/
+Local Modifications:
+    - LICENSE file has been created for compliance purposes.
+    Not included in original distribution.
+    - Empty __init__.py file was added to simplify import.
