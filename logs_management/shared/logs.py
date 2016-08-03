@@ -4,7 +4,7 @@ def parse_href(href):
     if href is None or len(href) == 0:
         return None
     parsed_href = urlparse.urlparse(href)
-    if parsed_href.netloc != 'ilps-srchproxy.science.uva.nl':
+    if parsed_href.netloc != YOUR_PROXY_SERVER_HOST_NAME:
         if parsed_href.netloc.startswith('scholar.google.') and parsed_href.path == '/scholar':
             return None
         #print >>sys.stderr, 'Passing through href:', href
