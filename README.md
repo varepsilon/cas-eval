@@ -3,6 +3,8 @@ This code is released to complement the following publication
 
 *Chuklin, A. and de Rijke, M. 2016. Incorporating Clicks, Attention and Satisfaction into a Search Engine Result Page Evaluation Model. CIKM (2016).*
 
+This is not an official Google product.
+
 It has several components described below:
   
   * `logs_collection/` — JavaScript library to proxy your request to a search engine and log your actions;
