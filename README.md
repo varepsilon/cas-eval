@@ -16,6 +16,9 @@ It has several components described below:
 
 ## Requirements
 
+### Logs Colection via Proxy
+See [corresponding README]/(logs_collection/README.md).
+
 ### App Engine log_management App
 
 *  Python libraries:
