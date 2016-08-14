@@ -10,5 +10,12 @@ Description:
     "Ageev, M. et al. 2013. Improving Search Result Summaries by Using Searcher
     Behavior Data. SIGIR (2013)."
 Local Modifications:
-    LICENSE file has been created for compliance purposes.
-    Not included in original distribution.
+    - LICENSE file has been created for compliance purposes.
+      Not included in original distribution.
+    - emu.js rewritten to include the exit questionnaire, navigation bar
+      and to ensure all the data is logged in the format expected by our
+      `logs_management/` backend. Some assorted changes needed for the
+      data collection for the following publication: "Chuklin, A. and
+      de Rijke, M. 2016. Incorporating Clicks, Attention and Satisfaction
+      into a Search Engine Result Page Evaluation Model. CIKM (2016)."
+      Remove some no longer used functions / variables.
