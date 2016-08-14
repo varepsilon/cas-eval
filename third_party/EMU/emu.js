@@ -16,70 +16,137 @@
  *
  * Contributor(s): Qi Guo (qguo3@emory.edu)
  * Contributor(s): Eugene Agichtein (eugene@mathcs.emory.edu)
+ * Contributor(s): Mikhail Ageev (mageev@yandex.ru)
  *
  * ***** END LICENSE BLOCK ***** */
-var _init = 0;
-var _invalid = 1;
-var _sendRequests = 1;
-var _saveLocalLog = 0;
-var _trackCached = 0;
-/** BEGIN: TO BE CHANGED **/
-var _getReqUrl = "http://ir-ub.mathcs.emory.edu:8100/";
-var _postReqUrl = "http://ir-ub.mathcs.emory.edu:8100/cgi/savePage.cgi?";
-var _localDir = "J:\\Research\\user_behavior_modeling\\Libx\\Libx.v0.7\\data\\";
-/** END: TO BE CHANGED **/
-var _header = _getReqUrl +"v=EMU.0.7.c&wid=";
-var _currHeaderUrl = "";
-var _currUrl = "";
-var _prevMouseMoveTime = 0;
-var _mouseMoveBuff = "";
-var _nMouseMove = 0;
-var _nKey = 0;
-var _keyBuff = "";
-var _nScroll = 0; 
-var _scrollBuff = "";
-var _prevScrollLeft = 0;
-var _prevScrollTop = 0;
-var _minInterval = 500;
-var _loadTab = "0";
-var _bl = new Array();
-var _wl = new Array();
 
-document.addEventListener("load",  onLoadCap, true); // if false, will fire just for the document - no frames
-window.addEventListener("load",  onLoad, false);
-window.addEventListener("unload",  onUnload, false);
-// window.addEventListener("onbeforeunload",  onBeforeUnload, false); 
-window.addEventListener("mousedown",  onMouseDown, false);
-window.addEventListener("mouseup",  onMouseUp, false);
-window.addEventListener("click",  onClick, false);
-window.addEventListener("mousemove",  onMouseMove, false);
-window.addEventListener("mouseover",  onMouseOver, false);
-window.addEventListener("mouseout",  onMouseOut, false); 
-window.addEventListener("keypress",  onKey, false);
-window.addEventListener("pageshow",  onPageShow, false); 
-window.addEventListener("pagehide",  onPageHide, false);
-window.addEventListener("blur",  onBlur, true); //not bubbling
-window.addEventListener("focus",  onFocus, true); //not bubbling
-window.addEventListener("change",  onChange, false);
-window.addEventListener("scroll",  onScroll, false);
-window.addEventListener("TabOpen",  onTabOpen, false); 
-window.addEventListener("TabClose",  onTabClose, false);
-window.addEventListener("TabSelect",  onTabSelect, false);
-window.addEventListener("resize",  onResize, false);
+if (_init == undefined) {
+    var _init = 0;
+    var _invalid = 1;
+    var _saveLocalLog = 0;
+    var _sendRequests = 1;
+    var _trackCached = 0;
+    /** BEGIN: TO BE CHANGED **/
+
+    var _getReqUrl = "http://ir-ub.mathcs.emory.edu:8100/site_media/emu_stub.htm?";
+    //var _postReqUrl = "http://ir-ub.mathcs.emory.edu:8100/cgi/savePage.cgi";
+    var _postReqUrl = "http://ir-ub.mathcs.emory.edu:8100/emu/save_page";
+    //MA
+    var _proxy_prefix_abs = "http://ir-ub.mathcs.emory.edu:8100/http/";
+    var _replace_links_to_proxy = window.location.href.indexOf(_proxy_prefix_abs) == 0;
+    var _localDir = "c:\\emu_log\\";
+
+    /** END: TO BE CHANGED **/
+    var _header = _getReqUrl +"v=EMU.0.9&wid=";
+    var _currHeaderUrl = "";
+    var _currUrl = "";
+    var _prevMouseMoveTime = 0;
+    var _mouseMoveBuff = "";
+    var _nMouseMove = 0;
+    var _nKey = 0;
+    var _keyBuff = "";
+    var _nScroll = 0;
+    var _scrollBuff = "";
+    var _prevScrollLeft = 0;
+    var _prevScrollTop = 0;
+    var _minInterval = 500;
+
+    var tab_id; // user
+
+    var _loadTab = "";
+    var _bl = new Array();
+    var _wl = new Array();
+    var _pageCacheDelay = 1000; // delay before cahcing the page
+    var _prevHtmlLength = -1;
+    var _mouseOverOutBuff = "";
+
+    //MA
+    var _log_buffer_MAX = 3000;
+    var _log_buffer = new Array();
+    var _log_buffer_sum_length = 0;
+    var _log_buffer_Timer = -1;
+    var _log_buffer_Timer_timeout = 3000;
+
+    var postPageContentTimer = -1;
+
+    window.addEventListener("load",  onLoad, false);
+    window.addEventListener("unload",  onUnload, false);
+    window.addEventListener("beforeunload",  onUnload, false);
+    window.addEventListener("mousedown",  onMouseDown, false);
+    window.addEventListener("mouseup",  onMouseUp, false);
+    window.addEventListener("click",  onClick, false);
+    window.addEventListener("mousemove",  onMouseMove, false);
+    window.addEventListener("mouseover",  onMouseOver, false);
+    window.addEventListener("mouseout",  onMouseOut, false);
+    window.addEventListener("keypress",  onKey, false);
+    window.addEventListener("pageshow",  onPageShow, false);
+    window.addEventListener("pagehide",  onPageHide, false);
+    window.addEventListener("blur",  onBlur, true); //not bubbling
+    window.addEventListener("focus",  onFocus, true); //not bubbling
+    window.addEventListener("change",  onChange, false);
+    window.addEventListener("scroll",  onScroll, false);
+    window.addEventListener("TabOpen",  onTabOpen, false);
+    window.addEventListener("TabClose",  onTabClose, false);
+    window.addEventListener("TabSelect",  onTabSelect, false);
+    window.addEventListener("resize",  onResize, false);
+    document.addEventListener("load",  onLoadCap, true); // if false, will fire just for the document - no frames
+    _log_buffer_Timer = setInterval("log_buffer_timer_run()",_log_buffer_Timer_timeout);
+
+    processNewURL();
+}
+
+function log_buffer_add(msg, doSynchronousFlush) {
+    _log_buffer.push(msg);
+    _log_buffer_sum_length += msg.length + 1;
+    if (doSynchronousFlush || _log_buffer_sum_length > _log_buffer_MAX) {
+        log_buffer_flush(doSynchronousFlush);
+    }
+}
+
+function log_buffer_flush(isSynchronous) {
+    if (_log_buffer_sum_length == 0) return;
+    var buffer_str = _log_buffer.join("&|&");
+    _log_buffer = new Array();
+    _log_buffer_sum_length = 0;
+    var sendData = _currHeaderUrl + "&time=" + getTime() + "&content_id=" + _content_id_saved + "&buffer:&" + buffer_str;
+    sendRequest("GET", sendData, isSynchronous);
+}
+
+function log_buffer_timer_run() {
+    log_buffer_add("ev=Timer&t=" + getTime(), true);
+}
 
 function initbl() { // black list
 	var bl = new Array();
-	bl[0] = "https";
-	bl[1] = /irlib\.library\.emory\.edu.*cgi\?user=/;
+	//bl[0] = "https";
+	//bl[1] = /irlib\.library\.emory\.edu.*cgi\?user=/;
 	
 	return bl;
 }
 
 function initwl() { // white list
 	var wl = new Array();
-	wl.push("http://ir-ub.mathcs.emory.edu:8100");	
+	wl[0] = "http://www.google.com";
+	wl[1] = "http://scholar.google.com";
+	wl[2] = "http://search.yahoo.com";
+	wl[3] = "http://www.baidu.com";
+	wl[4] = "http://www.youtube.com";
+	wl[5] = "http://answers.yahoo.com";
+	wl[6] = "http://www.live.com";	
+	wl[7] = "http://www.technorati.com";
+	wl[8] = "http://www.naver.com"; 
+	wl[9] = "wikipedia.org";
+	wl[10] = "digg.com";
+	wl[11] = "slashdot.com";
+	wl[12] = "flickr.com";
+	wl[13] = "del.icio.us";
+	wl[14] = "delicious.com";	
+	wl[15] = "http://search.live.com";
+	wl[16] = "http://www.bing.com";
+	wl[17] = "library.emory.edu";
+	wl[18] = "http://discovere.emory.edu/";
 	if (_trackCached)
-		wl.push("file:///");
+		wl[19] = "file:///";
 	return wl;
 }
 
@@ -96,7 +163,7 @@ var myExt_urlBarListener = {
     onLocationChange: function(aProgress, aRequest, aURI)
     {
         // being called when location change
-		processNewURL(aURI);
+		processNewURL(aURI);		
     },
 
     onStateChange: function() {},
@@ -106,66 +173,66 @@ var myExt_urlBarListener = {
     onLinkIconAvailable: function() {}
 };
 
+
 function processNewURL(aURI) {
-        _init = 0;    
-        // 1. send the buffers for the previous tab/window        
-        var time = getTime();
-        var sendData = 
-		_currHeaderUrl
-		+ "&ev=LocationChange0"
-		+ "&time=" + time;
-        if (!_invalid){
-			sendBuffData(_currHeaderUrl);		
-        }        
-        sendRequest("GET", sendData);					
-        _prevScrollLeft = 0;
-        _prevScrollTop = 0;		        
-        // 2. init the trackings
-        _currUrl = (aURI.spec)+"";
-		_currHeaderUrl = getHeaderUrl(_currUrl);		
-        sendData = _currHeaderUrl+"&ev=LocationChange1&time="+getTime();        
-		//alert(sendData);
-        sendRequest("GET", sendData);					
-				
-		_domIds = new Array();
-		_dupIds = new Array();
-        _init = 1;	
+    _init = 0;
+
+    // 1. send the buffers for the previous tab/window
+    tab_id = randomString();
+    var time = getTime();
+    _currUrl = null;
+    log_buffer_flush(true);
+    _currHeaderUrl = getHeaderUrl(_currUrl);
+    var sendData =
+        _currHeaderUrl
+        + "&ev=LocationChange0"
+        + "&time=" + time
+        + "&offsetX=" + window.pageXOffset
+        + "&offsetY=" + window.pageYOffset
+        + "&screenW=" + screen.width
+        + "&screenH=" + screen.height
+        + "&iw=" + window.innerWidth
+        + "&ih=" + window.innerHeight
+        + "&ow=" + window.outerWidth
+        + "&oh=" + window.outerHeight;
+
+    if (!_invalid){
+        sendBuffData(_currHeaderUrl);
+    }
+    sendRequest("GET", sendData);
+    _prevScrollLeft = 0;
+    _prevScrollTop = 0;
+
+    // 2. init the trackings
+    log_buffer_add("ev=LocationChange1&time=" + getTime());
+
+    if (postPageContentTimer > 0)
+        clearTimeout(postPageContentTimer);
+    postPageContentTimer = setTimeout("postPageContent('LocationChange');",_pageCacheDelay);
+
+    _domIds = new Array();
+    _dupIds = new Array();
+    _init = 1;
  }
 
 function getHeaderUrl(url)
 {
+    //alert("in getHeaderUrl :url=" + url);
     if (url==null) {
-    	url = (content.document.location.href)+"";
+    	url = (window.document.location.href)+"";
 		_currUrl = url;
     }        
     var headerUrl;
-    var type = "";    
-    if (!onList(_bl,url)){ // not on black list
-		if (onList(_wl,url)) {
-			type = "w";
-		}
-		else if(ongl()) {
-			type = "g";
-		}
-		else {
-			type = "o";
-		}
-        //headerUrl = _header+_loadTab+"&tab="+gBrowser.selectedTab.linkedPanel+"&type="+type+"&url="+urlencode(url);
-		headerUrl = _header+_loadTab+"&tab=0"+"&type="+type+"&url="+urlencode(url);
-		// append referrer if the URL not on black list
-		var ref = content.document.referrer;
-		if (ref != null && ref != "")
-		headerUrl += "&ref="+urlencode(ref);
-        _invalid = 0;
-    }
-    else { // truncate URL is on black list
-        var indx1 = url.indexOf("//")+2;
-        var indx = url.substring(indx1).indexOf("/");
-		url = url.substring(0,indx1+indx+1);
-        //headerUrl = _header+_loadTab+"&tab="+gBrowser.selectedTab.linkedPanel+"&type=b&url="+urlencode(url);
-		headerUrl = _header+_loadTab+"&tab=0"+"&type=b&url="+urlencode(url);
-        _invalid = 1;
-    }
+    var type = "w";
+    headerUrl = _header+_loadTab+"&tab=0&type="+type+"&tab_id="+tab_id+"&url="+urlencode(url);
+
+    // append referrer if the URL not on black list
+    var ref = window.document.referrer;
+    if (ref != null && ref != "")
+        headerUrl += "&ref="+urlencode(ref);
+
+    _invalid = 0;
+
     return headerUrl;
 }
 
@@ -195,10 +262,8 @@ function onMouseDown(event)
 			  break;
 			default:
 		}
-		var headerUrl = _currHeaderUrl;
-		var sendData = 
-			headerUrl
-			+ "&ev=MouseDown"
+		var sendData =
+			"ev=MouseDown"
 			+ "&time=" + _mouseDownTime
 			+ "&btn="+ button
 			+ "&cx=" + cx 
@@ -209,19 +274,20 @@ function onMouseDown(event)
 			+ "&y=" + y 
 			+ "&iw=" + window.innerWidth
 			+ "&ih=" + window.innerHeight
-			+ "&scrlW=" + content.document.documentElement.scrollWidth
-			+ "&scrlH=" + content.document.documentElement.scrollHeight
+			+ "&scrlW=" + window.document.documentElement.scrollWidth
+			+ "&scrlH=" + window.document.documentElement.scrollHeight
 			+ "&ow=" + window.outerWidth 
 			+ "&oh=" + window.outerHeight
-			+ "&targ_id=" + urlencode(target.id);		
+			+ "&targ_id=" + getEmuId(target); //urlencode(target.id);
 		var tagName = target.tagName;						
 		sendData += "&tag="+urlencode(tagName);
-		if(tagName == "menuitem" 
-			|| tagName == "toolbarbutton")
-			sendData += "&label="+urlencode(target.label);
-		sendData += "&DOM_path=" + urlencode(getDomPath(target));
-		sendData += "&is_doc_area=" + (y - cy > 50)?1:0;	
-		sendRequest("GET", sendData);
+        var atag = target;
+        while (atag && atag.tagName != 'A')
+            atag = atag.parentElement;
+        if (atag && atag.tagName == 'A')
+            sendData += "&href="+urlencode(atag.href);
+		sendData += "&is_doc_area=" + (y - cy > 50)?1:0;
+        log_buffer_add(sendData, true);
 	}
 }
 
@@ -232,28 +298,38 @@ function onMouseUp(event) {
 		var duration = _mouseUpTime - _mouseDownTime;
 		var target = event.target;
 		var sendData = 
-		_currHeaderUrl
-		+"&ev=MouseUp"
-		+"&time=" +_mouseUpTime 
-		+"&duration="+duration
-		+ "&targ_id=" + urlencode(target.id);	
-		sendData += "&DOM_path=" + urlencode(getDomPath(target));
-		var sel = content.getSelection().toString();
+            "ev=MouseUp"
+            +"&time=" +_mouseUpTime
+            +"&duration="+duration
+            + "&targ_id=" + getEmuId(target); //urlencode(target.id);
+		var sel = window.getSelection().toString();
 		if (sel&&(onList(_wl)||ongl())) {
 			sendData+="&select_text="+urlencode(sel);    			
-		}		
-		sendRequest("GET", sendData);    
+		}
+        log_buffer_add(sendData);
 	}
 }
 
-function onClick(event)
-{
-	if (isValid()&&(onList(_wl)||ongl())) {
+function onDocClick(event) {
+     onClick(event, true);
+}
+
+function onClick(event, saveDoc)
+{    
+    if (isValid()&&(onList(_wl)||ongl())){           
 		var time = getTime();
 		var x = event.screenX-window.screenX;
 		var y = event.screenY-window.screenY;
 		var cx = event.clientX;			
 		var cy = event.clientY; 
+	    
+		var isDocArea = (y - cy > 50) ? 1 : 0;
+		
+		if (saveDoc != undefined) {
+			if (!saveDoc && isDocArea)
+				return;
+			}
+			
 		var scrlX = cx + _prevScrollLeft;
 		var scrlY = cy + _prevScrollTop;	
 		var button = "";
@@ -271,10 +347,8 @@ function onClick(event)
 			  break;
 			default:
 		}
-		var headerUrl = _currHeaderUrl;
-		var sendData = 
-			headerUrl
-			+ "&ev=Click"
+		var sendData =
+			"ev=Click"
 			+ "&time=" + time
 			+ "&btn="+ button
 			+ "&cx=" + cx 
@@ -285,20 +359,23 @@ function onClick(event)
 			+ "&y=" + y 
 			+ "&iw=" + window.innerWidth
 			+ "&ih=" + window.innerHeight
-			+ "&scrlW=" + content.document.documentElement.scrollWidth
-			+ "&scrlH=" + content.document.documentElement.scrollHeight
+			+ "&scrlW=" + window.document.documentElement.scrollWidth
+			+ "&scrlH=" + window.document.documentElement.scrollHeight
 			+ "&ow=" + window.outerWidth 
 			+ "&oh=" + window.outerHeight
-			+ "&targ_id=" + urlencode(target.id);		
+			+ "&targ_id=" + getEmuId(target); //urlencode(target.id);
 		var tagName = target.tagName;						
 		sendData += "&tag="+urlencode(tagName);
-		if(tagName == "menuitem" 
-			|| tagName == "toolbarbutton")
-			sendData += "&label="+urlencode(target.label);
-		sendData += "&DOM_path=" + urlencode(getDomPath(target));
-		var isDocArea = (y - cy > 50)?1:0;
-		sendData += "&is_doc_area=" + isDocArea;		
-		sendRequest("GET", sendData);
+        var atag = target;
+        while (atag && atag.tagName != 'A')
+            atag = atag.parentElement;
+		if (atag && atag.tagName == 'A')
+		    sendData += "&href="+urlencode(atag.href);
+	    var res_info = getLiIndex(target);
+	    // adds result rank, id and class name 
+		if (res_info != null)
+	        sendData += res_info;
+        log_buffer_add(sendData, true);
 	}
 }
 
@@ -330,34 +407,30 @@ function onMouseMove(event)
 		var yCyDiff = y - cy;
 		var isDocArea = (yCyDiff > 50)?1:0;
 		if (distance >= _distanceThreshold 
-		|| time - _prevMouseMoveTime >= _timeThreshold
-		|| xCxDiff != _xCxDiff 
-		|| yCyDiff != _yCyDiff
-		|| isDocArea != _isDocArea
-		) {
+                || time - _prevMouseMoveTime >= _timeThreshold
+                || xCxDiff != _xCxDiff
+                || yCyDiff != _yCyDiff
+                || isDocArea != _isDocArea
+		    ) {
 			if (xCxDiff != _xCxDiff 
 				|| yCyDiff != _yCyDiff
 				|| isDocArea != _isDocArea				
 				) {
-				if (_initMouseMove) {
-					sendMouseMoveData(_currHeaderUrl);
-				} else 
-					_initMouseMove = 1;
 				_xCxDiff = xCxDiff;
 				_yCyDiff = yCyDiff;
 				_isDocArea = isDocArea;
 			}			
 			
-			if (_nMouseMove > 0) 
-				_mouseMoveBuff += "|";
-            _mouseMoveBuff += 
-			time +","
-			+ cx + ","
-			+ cy			
             _nMouseMove++;
-            if (_nMouseMove == 20) {
-               sendMouseMoveData(_currHeaderUrl);
-            }
+            var data =
+                "ev=MMov" +
+                "&d=" + time +
+                "," + cx +
+                "," + cy +
+                "," + window.pageXOffset +
+                "," + window.pageYOffset +
+                "," + _nMouseMove;
+            log_buffer_add(data);
 			_prevCX = cx;
 			_prevCY = cy;
 			_prevMouseMoveTime = time;			
@@ -366,38 +439,22 @@ function onMouseMove(event)
     }    
 }
 
-function sendMouseMoveData(headerUrl) {
-	if (headerUrl == null)
-		headerUrl = _currHeaderUrl;
-	if (_nMouseMove > 0) {
-		var sendData = 
-		headerUrl
-		+ "&ev=MouseMove"
-		+ "&time=" + getTime()
-		+ "&xCxDiff=" + _xCxDiff
-		+ "&yCyDiff=" + _yCyDiff
-		+ "&is_doc_area=" + _isDocArea	
-		+ "&nSampleMV=" + _nMouseMove
-		+ "&nTotalMV=" + _nTotalMove
-		+ "&buff=" + _mouseMoveBuff;		
-		sendRequest("GET", sendData);		
-		_mouseMoveBuff = "";
-		_nMouseMove = 0;
-		_nTotalMove = 0;		
-	}
-}
-
-function sendRequest(sendType, sendData){
+function sendRequest(sendType, sendData, isSynchronous){
+    //console.log("" + getTime() + " " + sendData);
+	if (sendData != undefined){
         var req = new XMLHttpRequest();
-        req.open(sendType, sendData, true);	        
+        var isSynchronous1 = isSynchronous || sendData.indexOf("ev=Click") >= 0 || sendData.indexOf("ev=UnLoad") >= 0;
 		// by default send requests to the HTTP server
-		if (_sendRequests)
+		if (_sendRequests) {
+            req.open(sendType, sendData, !isSynchronous1);
 			req.send(null);
-			
+        }
 		// optionally write log to local files
-		var filePath = _localDir + _loadTab + ".dat";
-		if (_saveLocalLog)
+		if (_saveLocalLog) {
+            var filePath = _localDir + _loadTab + ".dat";
 			writeLogFile(filePath, sendData, true);
+        }
+	}
 }
 
 function writeLogFile(filePath, text, isEventLog) 
@@ -423,33 +480,34 @@ function writeLogFile(filePath, text, isEventLog)
 	foStream.close();
 }
 
-function sendBuffData(headerUrl) {
-	sendMouseMoveData(headerUrl);
+function sendBuffData(headerUrl, isSynchronous) {
 	sendKeyData(headerUrl);
-	sendScrollData(headerUrl);        
-	sendMouseOutData();
 }
 
 function onUnload(event)
 {
-	// alert("onUnload:"+event.href);
     //gBrowser.removeProgressListener(myExt_urlBarListener); // remove location change listener
-    var time = getTime();
-	var headerUrl = _currHeaderUrl;
-    var sendData = headerUrl +"&ev=UnLoad&time="+time;
+	var doc = event.target.ownerDocument || event.originalTarget;
+    if (doc && doc.body) {
+        //doc.body.removeEventListener('DOMNodeInserted', onDOMNodeInserted, false);
+    	doc.body.removeEventListener("click",  onDocClick, false);
+    }
+
+    log_buffer_add("ev=UnLoad&time="+getTime(), true);
     if (isValid()){
-		sendBuffData(headerUrl);
-    }	    
-	sendRequest("GET", sendData);
+        sendBuffData(headerUrl);
+    }
     _init = 0;
-    sleep(_minInterval); //  for request to complete    
 }
 
-
-// function onBeforeUnload(event)
-// {
-	// alert("onBeforeUnload");	 
-// }
+function onDOMNodeInserted(event) {
+    if (event.target.nodeName.toLowerCase() == 'li')
+		if (event.target.parentNode.nodeName.toLowerCase() == 'ol') {
+			if (postPageContentTimer > 0) // don't cache too often
+				clearTimeout(postPageContentTimer);
+            postPageContentTimer = setTimeout("postPageContent('DomChange');",_pageCacheDelay);
+    }
+}
 
 function sleep(interval) { // time is in milli-sec
 	var start = getTime();
@@ -505,8 +563,7 @@ function inKeyHash(kh, keyCode) {
 	}
 }
 
-function onKey(e)
-{ 	
+function onKey(e) {
 	if (isValid()) {
 		if (_nKey>0) 
 			_keyBuff += "|";
@@ -529,10 +586,13 @@ function onKey(e)
 				_keyBuff += getTime()+","+printChar(e, "alt");
 			}
 		}
+				
 		_nKey++;
-		if (_nKey == 20) {
-			sendKeyData(_currHeaderUrl);
-		}
+        if (e.keyCode == 13 || _nKey > 20) {
+            log_buffer_add("ev=Key&keys=" + _keyBuff, e.keyCode == 13);
+            _keyBuff = "";
+            _nKey = 0;
+        }
 	}		
 }
 
@@ -579,9 +639,8 @@ function matchPostUrl(url) {
 
 var _prevLoadUrl = null;
 function onLoadCap(event) {
-	// triggered everytime a page loads	
+	// triggered everytime a page loads
 	if (isValid()) {
-		//alert("onLoadCap");
 	  if ((typeof(event.originalTarget)!="undefined") && (typeof(event.originalTarget.location)!="undefined")) {
 		var url = event.originalTarget.location.href;
 		if (url == _prevLoadUrl)
@@ -604,73 +663,137 @@ function onLoadCap(event) {
 var _emuIndex = 0;
 var _outputDupIds = false;
 
-function traverseDomTree() {
-  _emuIndex = 0;  
-  var bodyElement = content.document.getElementsByTagName("body").item(0);
-  traverseDomTreeRecurse(bodyElement, 0);
-
-  // output duplicated IDs when debug
-  if (_outputDupIds && _dupIds.length > 0) {
-	var dups = "";
-	for (var id in _dupIds) {
-		dups += "-"+id+":"+_dupIds[id];
-	}
-	//alert(dups);
-  }
+function traverseDomTree() { 
+  traverseDomTreeRecurse(document.documentElement, 0);
 }
 
 var _domIds = new Array();
 var _dupIds = new Array();
+var _resultcoordinates;
 function traverseDomTreeRecurse(currElement, level) {
-  var i;
-  if(currElement.childNodes.length <= 0) {
-    // This is a leaf node.
- 	 if (!currElement.id) {
-		// assign id if there does not exist one
-		currElement.id = _emuIndex++;		
-	 }
-	 else { 
-		// do nothing but keep track of duplication IDs
-		 if (_domIds[getDomPath(currElement)]) {		
-			if (_dupIds[currElement.id] > 0) {				
-				_dupIds[currElement.id]++;
-			} else {
-				_dupIds[currElement.id] = 1;
-				_dupIds.length++;
-			}
-			
-		 } else {
-			_domIds[getDomPath(currElement)] = 1;
-			_domIds.length++;
-		 }
-	 }
-	 
-  } else {
-    // Expand each of the children of this node.
-	if (!currElement.id) {
-		// assign id if there does not exist one
-		currElement.id = _emuIndex++;		
-	}  else {
-		// do nothing but keep track of duplication IDs	 
-		 if (_domIds[getDomPath(currElement)]) {
-			if (_dupIds[currElement.id] > 0) {
-				_dupIds[currElement.id]++;
-			} else {
-				_dupIds[currElement.id] = 1;
-				_dupIds.length++;
-			}
-		 } else {
-			_domIds[getDomPath(currElement)] = 1;
-			_domIds.length++;
-		 }
-	}
-	for(i = 0; currElement.childNodes.item(i); i++) {	  
-		traverseDomTreeRecurse(currElement.childNodes.item(i), level+1);	  
-	}
-  }
+    // MA
+    if (currElement.nodeType == Node.ELEMENT_NODE) {
+        if (currElement.getAttribute("emuid") == null) {
+            currElement.setAttribute("emuid", "" + (++_emuIndex));
+
+            if (_replace_links_to_proxy) {
+                var tagname = currElement.tagName;
+                var attname = "";
+                if (tagname == "A") attname = "href";
+                else if (tagname == "FORM") attname = "action";
+                if (attname) {
+                    var attvalue = currElement.getAttribute(attname);
+                    if (attvalue) {
+                        if (attvalue.charAt(0) == "/" && attvalue.charAt(1) != "/" && attvalue.substring(0, 6) != "/http/") {
+                            var slash_pos = location.href.indexOf("/", _proxy_prefix_abs.length + 1);
+                            if (slash_pos < 0) slash_pos = location.href.length;
+                            var domain = location.href.substring(_proxy_prefix_abs.length, slash_pos);
+                            currElement.setAttribute(attname, _proxy_prefix_abs + domain + attvalue);
+                        } else if (attvalue.substring(0, 7) == "http://") {
+                            currElement.setAttribute(attname, _proxy_prefix_abs + attvalue.substring(7));
+                        } else if (attvalue.substring(0, 8) == "https://") {
+                            // replace https to http, it may produce wrong results, but the user will not leave proxy
+                            currElement.setAttribute(attname, _proxy_prefix_abs + attvalue.substring(8));
+                        }
+                    }
+                } else {
+                    if (tagname == "IMG") attname = "src";
+                    else if (tagname == "LINK") attname = "href";
+                    else if (tagname == "STYLE") attname = "src";
+                    else if (tagname == "BODY") attname = "background";
+                    if (attname) {
+                        var attvalue = currElement.getAttribute(attname);
+                        if (attvalue) {
+                            if (attvalue.charAt(0) == "/" && attvalue.charAt(1) != "/" && attvalue.substring(0, 6) != "/http/") {
+                                var slash_pos = location.href.indexOf("/", _proxy_prefix_abs.length + 1);
+                                if (slash_pos < 0) slash_pos = location.href.length;
+                                var domain = location.href.substring(_proxy_prefix_abs.length, slash_pos);
+                                currElement.setAttribute(attname, "http://" + domain + attvalue);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        var offsetParent_emuid = 0;
+        if (currElement.offsetParent) {
+            offsetParent_emuid = currElement.offsetParent.getAttribute("emuid");
+        }
+        var emup = "" + offsetParent_emuid +
+            ";" + currElement.offsetLeft +
+            ";" + currElement.offsetTop +
+            ";" + currElement.offsetWidth +
+            ";" + currElement.offsetHeight;
+        currElement.setAttribute("emup", emup);
+
+        for(var i = 0; currElement.childNodes.item(i); i++) {
+            traverseDomTreeRecurse(currElement.childNodes.item(i), level+1);
+        }
+    } else if (currElement.nodeType == Node.TEXT_NODE && currElement.data.trim().length > 20) { // don't touch empty or short text nodes
+        var parentTag = currElement.parentElement.tagName;
+        if (parentTag == "SCRIPT" || parentTag == "STYLE" || parentTag == "TITLE") return;
+        //if (currElement.data.indexOf("derives from the edible fruit which is a favorite food of") >= 0) {
+
+        // split long text into words wrapped to <span> elements
+        var text = currElement.data;
+        var split = text.split(" ");
+        if (split.length <= 2) return; // do not touch short nodes
+        var newels = Array();
+        var buf = "";
+        var n_longwords = 0;
+        for (var i = 0; i<split.length; i++) {
+            var s = (i > 0 ? " " : "") + split[i];
+            if (s.length <= 4) {  // do not touch short words
+                buf += s;
+            } else {
+                if (buf.length > 0) {
+                    newels.push(document.createTextNode(buf));
+                    buf = "";
+                }
+                var el = document.createElement("span");
+                el.appendChild(document.createTextNode(s));
+                newels.push(el);
+                n_longwords++;
+            }
+        }
+        if (buf.length > 0) {
+            newels.push(document.createTextNode(buf));
+        }
+        if (n_longwords > 1) {
+            var parent = currElement.parentElement;
+            var nextSibling = currElement.nextSibling;
+            parent.replaceChild(newels[0], currElement);
+            for (var i = 1; i<newels.length; i++) {
+                parent.insertBefore(newels[i], nextSibling);
+            }
+            for (var i = 0; i<newels.length; i++) {
+                if (newels[i].nodeType == Element.ELEMENT_NODE) {
+                    traverseDomTreeRecurse(newels[i], level+1);
+                }
+            }
+        }
+        //console.log(">>" + _emuIndex + " " + level + " " + currElement.parentElement.getAttribute("emuid") + " " + currElement.data.trim());
+    }
+}
+
+// MA
+function getEmuId(node) {
+    if (node && node.getAttribute) {
+        var emuid = node.getAttribute("emuid");
+        if (emuid != null) {
+            return emuid;
+        } else {
+            return 0;
+        }
+    } else {
+        return 0;
+    }
 }
 
 var _prevUrl = null;
+
+
 function onPageShow(e)
 {
 	//var url = e.originalTarget.location.href;
@@ -680,55 +803,105 @@ function onPageShow(e)
 		_dupIds = new Array();	
 		// 1. GET
 		var time = getTime();
-		var sendData = _currHeaderUrl+"&ev=PageShow&time="+time;
-		
+		var sendData = "ev=PageShow&time="+time
+            + "&scrlW=" + window.document.documentElement.scrollWidth
+            + "&scrlH=" + window.document.documentElement.scrollHeight
+            + "&offsetX=" + window.window.pageXOffset
+            + "&offsetY=" + window.window.pageYOffset
+            + "&bodyScrlW=" + window.document.body.scrollWidth
+            + "&bodyScrlH=" + window.document.body.scrollHeight
+            + "&screenW=" + screen.width
+            + "&screenH=" + screen.height
+            + "&iw=" + window.innerWidth
+            + "&ih=" + window.innerHeight
+            + "&ow=" + window.outerWidth
+            + "&oh=" + window.outerHeight
+            ;
+
 		//2. POST
-		sendData = postPageContent(sendData, time);	
-		sendRequest("GET", sendData);
+		if (postPageContentTimer > 0)
+			clearTimeout(postPageContentTimer);
+        postPageContentTimer = setTimeout("postPageContent('PageShow');",_pageCacheDelay);
+        log_buffer_add(sendData, true);
+
+    	var doc = e.target.ownerDocument || e.originalTarget;
+    	if (doc && doc.body) {
+    		doc.body.addEventListener('DOMNodeInserted', onDOMNodeInserted, false);
+			doc.body.addEventListener("click",  onDocClick, false);    	
+    	}
     }
 }
 
 var _debug = false;
 var _rawHTML = false;
-function postPageContent(sendData, time) {
+
+// MA
+var _content_id_saved = "";
+
+function postPageContent(evName) {
 	var url = _currUrl;
 	//var url = (content.document.location.href)+"";
+	var raw_html_content = document.body.innerHTML;
+	var raw_head_content = document.head.innerHTML;	
 	
-	var urlMatch = matchPostUrl(url);	
-	if (urlMatch) 
-	{  		
-		var req2 = new XMLHttpRequest();
-		// traverse DOM tree to assign ids to all elements
-		traverseDomTree();					
-		var raw_html_content = content.document.documentElement.innerHTML;
-		raw_html_content = "<html>\n"+raw_html_content+"\n</html>";
-		var html_content = urlencode(raw_html_content);
-		if (_rawHTML) 
-			html_content = raw_html_content;
-		var length = Math.min(65535, html_content.length);
-		var content_id = calcSHA1(html_content);
-		var sendData2 = 
-			"wid="+_loadTab
-			+"&content_id="+content_id
-			+"&time="+time
-			+"&url="+urlencode(url)
-			+"&data=";
-		sendData2 += html_content + "&type=Serp"+"&length="+html_content.length;
-		
-		// POST				
-		req2.open("POST", _postReqUrl, true); 
-		req2.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");       
-		if (_sendRequests)
-			req2.send(sendData2);
-		
-		var filePath = _localDir + content_id + ".html";
-		if (_saveLocalLog)
-			writeLogFile(filePath, raw_html_content, false);
+	_prevHtmlLength = raw_html_content.length;
+	
+    var req2 = new XMLHttpRequest();
+    var time = getTime();
+    // traverse DOM tree to assign ids to all elements
+    traverseDomTree();
+    raw_html_content = document.body.innerHTML;
+    raw_html_content = raw_html_content.replace('<head>', '');
+    raw_html_content = '<head>  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> ' + raw_head_content + '</head> <body>' + raw_html_content + '</body>';
+    raw_html_content = "<!DOCTYPE html> \n <html> \n"+raw_html_content+"\n</html>";
 
-		sendData += "&content_id="+content_id;
-	}
-	_prevUrl = url;	
-	return sendData;
+    var html_content = urlencode(raw_html_content);
+    if (_rawHTML)
+        html_content = raw_html_content;
+    var length = Math.min(65535, html_content.length);
+    var content_id = calcSHA1(html_content);
+    // MA
+    if (content_id == _content_id_saved) return;
+
+    //log_buffer_add("ev=resultLayout&time=" + time + "&content_id=" + content_id + "&data=" + _resultcoordinates);
+    log_buffer_add("ev=contentCache&time=" + time + "&evSource=" + evName + "&content_id=" + content_id
+                +"&scrlW=" + window.document.documentElement.scrollWidth
+                + "&scrlH=" + document.documentElement.scrollHeight
+                + "&offsetX=" + window.pageXOffset
+                + "&offsetY=" + window.pageYOffset
+                + "&bodyScrlW=" + document.body.scrollWidth
+                + "&bodyScrlH=" + document.body.scrollHeight
+                + "&screenW=" + screen.width
+                + "&screenH=" + screen.height
+                + "&iw=" + window.innerWidth
+                + "&ih=" + window.innerHeight
+                + "&ow=" + window.outerWidth
+                + "&oh=" + window.outerHeight);
+
+
+    // POST
+    if (_sendRequests) {
+        var sendData2 =
+            "wid=0"
+                +"&tab_id="+tab_id
+                +"&content_id="+content_id
+                +"&time="+time
+                +"&url="+urlencode(url)
+                +"&data=";
+        sendData2 += html_content + "&type=Serp"+"&length="+html_content.length+"&evSource=" + evName;
+
+        req2.open("POST", _postReqUrl, true);
+        req2.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        req2.send(sendData2);
+        //console.log("data sent to " + _postReqUrl);
+        _content_id_saved = content_id;
+    }
+
+    if (_saveLocalLog) {
+        var filePath = _localDir + content_id + ".html";
+        writeLogFile(filePath, raw_html_content, false);
+    }
+	_prevUrl = url;
 }
 
 var _prevHideTime = 0;
@@ -769,7 +942,11 @@ var _prevBlurTime = 0;
 function onBlur(event) {
 	if (isValid() && _prevFocusUrl!=null) {		
 		var time = getTime();
-		var url = event.originalTarget.location.href;        
+		var url;
+		if (event.originalTarget.location != undefined)
+			url = event.originalTarget.location.href;        
+		else
+			url = undefined;
 		_prevFocusUrl = null;
 		if(time - _prevBlurTime < _minInterval)
 		{
@@ -791,7 +968,7 @@ function onChange(event)
 		+"&ev=Change"
 		+"&time="+getTime()
 		+"&val="+urlencode(target.value)
-		+"&targ_id="+urlencode(target.id)
+		+"&targ_id="+getEmuId(target) + //urlencode(target.id)
 		+"&targ_type="+urlencode(target.type)
 		; 	
 		if (target.type == "checkbox") {			
@@ -826,16 +1003,32 @@ function onTabClose(event)
 }
 
 function onTabSelect(event)
-{	
+{	    
     if (isValid()) {  
 		var time = getTime();
         var sendData = 
 		_currHeaderUrl
 		+"&ev=TabSelect"
-		+"&time="+ time
+		+"&time="+ time		
+		+ "&scrlW=" + document.documentElement.scrollWidth
+		+ "&scrlH=" + document.documentElement.scrollHeight				
+		+ "&offsetX=" + window.pageXOffset
+		+ "&offsetY=" + window.pageYOffset
+		+ "&bodyScrlW=" + document.body.scrollWidth
+		+ "&bodyScrlH=" + document.body.scrollHeight		
+		+ "&screenW=" + screen.width
+		+ "&screenH=" + screen.height
+		+ "&iw=" + window.innerWidth
+		+ "&ih=" + window.innerHeight
+		+ "&ow=" + window.outerWidth 
+		+ "&oh=" + window.outerHeight
 		; 		
-		sendData = postPageContent(sendData, time);	
-		sendRequest("GET", sendData);	
+		
+		if (postPageContentTimer > 0)
+			clearTimeout(postPageContentTimer);
+        postPageContentTimer = setTimeout("postPageContent('TabSelect');",_pageCacheDelay);
+		//sendData = postPageContent(sendData, time);					
+		sendRequest("GET", sendData);
     }
 }
 
@@ -843,70 +1036,57 @@ var _prevInnerWidth = null;
 var _prevInnerHeight = null;
 function onResize(event)
 {	
-    if (isValid() 
-	&& _prevInnerWidth != window.innerWidth
-	&& _prevInnerHeight != window.innerHeight) {    
+    if (isValid() && (_prevInnerWidth != window.innerWidth || _prevInnerHeight != window.innerHeight)) {
         var sendData = 
-		_currHeaderUrl
-		+"&ev=Resize"
-		+"&time="+getTime()	
-		+ "&iw=" + window.innerWidth
-		+ "&ih=" + window.innerHeight
-		+ "&scrlW=" + content.document.documentElement.scrollWidth
-		+ "&scrlH=" + content.document.documentElement.scrollHeight	
-		+ "&ow=" + window.outerWidth 
-		+ "&oh=" + window.outerHeight		
-		;
+            _currHeaderUrl
+            +"&ev=Resize"
+            +"&time="+getTime()
+            + "&scrlW=" + document.documentElement.scrollWidth
+            + "&scrlH=" + document.documentElement.scrollHeight
+            + "&offsetX=" + window.pageXOffset
+            + "&offsetY=" + window.pageYOffset
+            + "&bodyScrlW=" + document.body.scrollWidth
+            + "&bodyScrlH=" + document.body.scrollHeight
+            + "&screenW=" + screen.width
+            + "&screenH=" + screen.height
+            + "&iw=" + window.innerWidth
+            + "&ih=" + window.innerHeight
+            + "&ow=" + window.outerWidth
+            + "&oh=" + window.outerHeight;
+		
 		_prevInnerWidth = window.innerWidth;
 		_prevInnerHeight = window.innerHeight;
 		sendRequest("GET", sendData);
+
+        if (postPageContentTimer > 0)
+            clearTimeout(postPageContentTimer);
+        postPageContentTimer = setTimeout("postPageContent('Resize');",_pageCacheDelay);
     }
 }
 
 function onScroll(e)
-{
-    if (isValid()) {		
-		var doc = content.document.documentElement;
+{	   	    	
+	if (isValid()) {		
+		var doc = document.documentElement;
 		var scrollLeft = 0;
 		var scrollTop = 0;
 		// scroll offsets are reflected in either doc, or body (or neither)
 		if (doc.scrollTop > 0 || doc.scrollLeft > 0) {
 			scrollLeft = doc.scrollLeft;
 			scrollTop = doc.scrollTop;
-		} else if (content.document.body.scrollTop > 0 
-		|| content.document.body.scrollLeft > 0) {
-			scrollLeft = content.document.body.scrollLeft;
-			scrollTop = content.document.body.scrollTop;
+		} else if (document.body.scrollTop > 0 || document.body.scrollLeft > 0) {
+			scrollLeft = document.body.scrollLeft;
+			scrollTop = document.body.scrollTop;
 		} else {
 			// record scroll events even there's no scroll offsets
 		}
+								
 		_prevScrollLeft = scrollLeft;
 		_prevScrollTop = scrollTop;
-		if (_nScroll > 0)
-			_scrollBuff += "|";
-		_scrollBuff += getTime()+","+scrollLeft+","+scrollTop;                
-		_nScroll++;
-		//alert(sendData);
-		if (_nScroll == 20) {
-			sendScrollData(_currHeaderUrl);              
-        }      		
+        _nScroll++;
+		var msg = "ev=Scroll&d=" + getTime()+","+scrollLeft+","+scrollTop + "," +  window.pageXOffset + "," + window.pageYOffset + "," + _nScroll;
+        log_buffer_add(msg);
     }
-}
-
-function sendScrollData(headerUrl) {
-	if (headerUrl == null)
-		headerUrl = _currHeaderUrl;
-	if (_nScroll > 0) {
-		var sendData = 
-		headerUrl
-		+ "&ev=Scroll"
-		+ "&time="
-		+ getTime()
-		+ "&buff=" + _scrollBuff;
-		_nScroll = 0;	
-		_scrollBuff = "";
-		sendRequest("GET", sendData); 
-	}	
 }
 
 function formatEmpty(s) {
@@ -919,62 +1099,76 @@ function formatEmpty(s) {
 }
 
 function getDomPath(obj) {
-	var domPath = formatEmpty(obj.id);
+	var domPath = formatEmpty(getEmuId(obj)); //obj.id);
 	if (obj.parentNode) {
 		do {
 			obj = obj.parentNode;
-			domPath += "|"+formatEmpty(obj.id);
+			domPath += "|"+formatEmpty(getEmuId(obj)); //obj.id);
 			
 		} while (obj.parentNode)
 	}
 	return domPath;
 }
 
-var _mouseOverTime = 0;
-var _mouseOverData = null;
+function getLiIndex(obj) {
+    var res = -1;
+	var ret = null;
+	var li = null;
+	if (obj.parentNode) {
+		do {
+		   	if (obj.nodeName.toLowerCase() == 'li') {
+		   		li = obj; break;
+		   	}
+			obj = obj.parentNode;
+			
+		} while (obj.parentNode);
+	}
+	if (li) {
+	    obj = li;
+		do {
+		   	if (obj.nodeName.toLowerCase() == 'li')
+			{
+		   		    ++res;
+					ret = "&rank=" + res + "&className=" + obj.className + "&rid=" + getEmuId(obj); //obj.id;
+			}
+			obj = obj.previousSibling;
+			
+		} while (obj.previousSibling);
+	}
+	//return res;
+	return ret;
+}
+
 function onMouseOver(event)
 {
-	if (isValid()&&(onList(_wl)||ongl())) {
-		var target = event.target;
-		_mouseOverTime = getTime();  
-		_mouseOverData = _currHeaderUrl 
-			+ "&ev=MouseOver"
-			+ "&time=" + _mouseOverTime
-			+ "&targ_id=" + target.id;				
-		_mouseOverData += "&DOM_path=" + urlencode(getDomPath(target));
+	if (isValid()&&(onList(_wl)||ongl())) {	    		
+		var msg = "ev=MOver&d=" + getEmuId(event.target) + ",over," + getTime(); // + "," +  urlencode(getDomPath(event.target)); //escape(event.target.id)
+        log_buffer_add(msg);
     }    
-}
- 
-var _mouseOutTime = 0;
+} 
+
 function onMouseOut(event)
 {
 	if (isValid()&&(onList(_wl)||ongl())) {
-		sendMouseOutData();
-	}   	
+        var msg = "ev=MOut&d=" + getEmuId(event.target) +",out," + getTime(); // + "," +  urlencode(getDomPath(event.target)); // escape(event.target.id)
+        log_buffer_add(msg);
+    }
 }   
 
-function sendMouseOutData() {	
-	_mouseOutTime = getTime(); 
-	var duration = _mouseOutTime - _mouseOverTime;
-	if (duration >= _minInterval && _mouseOverTime > 0) {
-		var sendData = 
-		_mouseOverData // headerUrl is contained in mouseOverData
-		+ "&duration="+duration;
-		sendRequest("GET", sendData);			
-	}	
-}
-
 function onLoad() {
-	if(!_init) {        	 
-		//gBrowser.addProgressListener(myExt_urlBarListener,Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT); // location change listener
+	
+    if(!_init) {               
+	    // second argument is commented, as suggested in bug 
+		//gBrowser.addProgressListener(myExt_urlBarListener/*,Components.interfaces.nsIWebProgress.NOTIFY_STATE_DOCUMENT*/); // location change listener		
 		//_loadTab = gBrowser.selectedTab.linkedPanel;
-		_loadTab = "0"
 		_bl = initbl();
 		_wl = initwl();			
 		initKeyHash();
 		initSpecialKeyHash();
-		_currHeaderUrl = getHeaderUrl(); 
-		
+
+        log_buffer_flush();
+		_currHeaderUrl = getHeaderUrl();         
+		//alert(_currHeaderUrl);
 		var sendData = _currHeaderUrl+"&ev=Load&time="+getTime();
 		sendRequest("GET", sendData);
 		_prevScrollLeft = 0;
@@ -984,29 +1178,24 @@ function onLoad() {
 		_dupIds = new Array();			
 		_init = 1;					
 	}		
-	//alert("onLoad:"+_init + "\t"+_invalid);
+
 }
 
 // Utils
 function urlencode(str) {
-	var encode_str = escape(str); 
-	// for some reason, javascript does not escape "+"
-	encode_str = encode_str.replace(/\+/ig,"%2B");
-	return encode_str;
+    return encodeURIComponent(str);
 }
 
 // return in milli-sec
 function getTime(date)
 {
-    if (date == null) {
-    	date = new Date();
-    } 
-    return date.getTime();
+    return new Date().getTime();
 }
 
 function onList(list, url) {
-	if (url==null) {
-		headerUrl = _currHeaderUrl;		
+    return true; // hack for uFind-It
+    if (url==null) {
+		headerUrl = _currHeaderUrl;
 		url = _currUrl;
 		// trim the header
 		// url = unescape(headerUrl.replace(_header, ""));
@@ -1021,7 +1210,8 @@ function onList(list, url) {
 
 // gray list: i.e., if the referrer is on white list
 function ongl() {
-	var ref = content.document.referrer;	
+    return true; // hack for uFind-It
+	var ref = document.referrer;
 	if (ref && onList(_wl,ref)){
 		return true;
 	}
@@ -1030,9 +1220,8 @@ function ongl() {
 
 // if the tracking code initialized and the given URL is not on black list
 function isValid(url) {
+    return true; // hack for uFind-It
 	var ret = _init == 1 && _invalid==0;
-	//alert("isValid:"+ret);
-	//alert("isValid:"+_init + "\t"+_invalid);
 	return ret;
 }
 
@@ -1228,3 +1417,49 @@ function binb2b64(binarray)
   }
   return str;
 }
+
+/**
+ Gives X position of an element 
+*/
+function get_pos_X(element) {
+	var current_left = 0;
+	if (element.offsetParent) {
+		while (element.offsetParent) {
+			current_left += element.offsetLeft
+			element = element.offsetParent;
+		}
+	} else if (element.x)
+		current_left += element.x;
+	
+	return current_left;
+}
+
+/**
+ Gives Y position of an element 
+*/
+function get_pos_Y(element) {
+	var current_top = 0;
+	
+	if (element.offsetParent) {
+		while (element.offsetParent) {
+			current_top += element.offsetTop
+			element = element.offsetParent;
+			
+		}
+	} else if (element.y)
+		current_top += element.y;
+	
+	return current_top;
+}
+
+function randomString() {
+	var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+	var string_length = 32;
+	var randomstring = '';
+	for (var i=0; i<string_length; i++) {
+		var rnum = Math.floor(Math.random() * chars.length);
+		randomstring += chars.substring(rnum,rnum+1);
+	}
+	return randomstring;
+}
+

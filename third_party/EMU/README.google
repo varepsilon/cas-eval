@@ -1,11 +1,14 @@
-URL: http://ir-ub.mathcs.emory.edu/uFindIt/
-Version: 2010/12/12 (emu.js file modification date)
+URL: http://ir-ub.mathcs.emory.edu/BeBS/
+Version: 2013/05/23 (emu.js file modification date)
 License: GPL v2
 License File: LICENSE
 Description:
-    Oringinal code was released as part of the following publication:
+    Original code was released as part of the following publication:
     "Guo, Q. and Agichtein, E. 2008. Exploring mouse movements for inferring
     query intent. SIGIR. (2008), 707–708."
+    This was later modified as part of the following publication:
+    "Ageev, M. et al. 2013. Improving Search Result Summaries by Using Searcher
+    Behavior Data. SIGIR (2013)."
 Local Modifications:
     LICENSE file has been created for compliance purposes.
     Not included in original distribution.
