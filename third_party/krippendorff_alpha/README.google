@@ -8,5 +8,7 @@ Description:
     http://grrrr.org/2011/05/31/krippendorff_alpha-python/
 Local Modifications:
     - LICENSE file has been created for compliance purposes.
-    Not included in original distribution.
+      Not included in original distribution.
     - Empty __init__.py file was added to simplify import.
+    - Add possibility to mask missing items using a functor.
+      Simplify the code a bit, fix formatting.
