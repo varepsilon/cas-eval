@@ -17,7 +17,7 @@ It has several components described below:
 ## Requirements
 
 ### Logs Colection via Proxy
-See [corresponding README]/(logs_collection/README.md).
+See [corresponding README!]/(logs_collection/README.md).
 
 ### App Engine log_management App
 
@@ -36,8 +36,8 @@ pip install -t logs_management/lib Flask GoogleAppEngineCloudStorageClient Werkz
   * JS file to be put in `logs_management/static/js/moment.js`
 * (Optional) Ajax loader gif generated via [ajaxload.info](http://www.ajaxload.info/):
   * Go to website, select indicator type "Bar", press "Generate it" download it.
-  * It should look similar to this: ![ajax-loder.gif](http://www.ajaxload.info/cache/FF/FF/FF/00/00/00/8-0.gif).
   * Put it under `logs_management/static/img/ajax-loader.gif`
+  * You can use other image (or none at all) if you wish.
   
 ### Logs Processing / Data Analysis
 * Scientific Python stack: NumPy, SciPy, Pandas, scikit-learn, Matplotlib, Seaborn
