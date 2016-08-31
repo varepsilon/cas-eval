@@ -864,24 +864,6 @@ if __name__ == '__main__':
         'random': RandomSatModel(),
     }
 
-    def flatten(results):
-        out = []
-        for idx, result in results:
-            for model, r in result.iteritems():
-                if isinstance(r, tuple):
-                    print >>sys.stderr, r
-                else:
-                    out += [{'rep': idx[0], 'fold': idx[1], 'model': model, 'metric': k, 'value': v} \
-                            for (k, v) in r.iteritems()]
-        return out
-
-    def is_complex(serp):
-        for snippet in serp:
-            for c in snippet['class']:
-                if c != u'g':
-                    return True
-        return False
-
     for train_index, test_index in sklearn.cross_validation.ShuffleSplit(N, n_iter=1, random_state=42):
         train_data = data[train_index]
         test_data = data[test_index]

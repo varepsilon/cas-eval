@@ -61,32 +61,6 @@ def process_results_file(worker_to_id, query_to_id, in_files, out_file, rel_type
                                             })
 
 
-# All combination of CSS classes encountered in the data
-SNIPPET_CLASSES = [
-    frozenset([u'g']),
-    frozenset([u'_oqc', u'g']),
-    frozenset([u'g', u'g-blk', u'kno-kp', u'mnr-c']),
-    frozenset([u'g', u'g-blk', u'mnr-c', u'rhsvw']),
-    frozenset([u'g', u'g-blk', u'kno-kp', u'mnr-c', u'rhsvw']),
-    frozenset([u'g',
-            u'g-blk',
-            u'kno-fb-suppressed',
-            u'kno-kp',
-            u'mnr-c',
-            u'rhsvw']),
-    frozenset([u'_Nn', u'_wbb', u'card-section', u'g']),
-    frozenset([u'_df', u'_mZd', u'card-section', u'g']),
-    frozenset([u'_Abb', u'_Nn', u'card-section', u'g']),
-    frozenset([u'currency', u'g', u'obcontainer', u'vk_c'])
-]
-
-
-# Reserve one feature for the intercept.
-CLASSES_TO_FEATURE_NUM = dict((c, 2 + k) for k, c in enumerate(SNIPPET_CLASSES))
-
-
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
             description='Anonymize queries, documents and workers to release the data.')
@@ -165,3 +139,4 @@ if __name__ == '__main__':
                                         })
     # Verify that we have exactly 10 SERP item types
     assert classes_to_id.current_num == 10
+
