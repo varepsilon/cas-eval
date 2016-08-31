@@ -23,7 +23,6 @@ from __future__ import division
 
 from abc import ABCMeta, abstractmethod
 import argparse
-import bs4
 import collections
 import csv
 import itertools
@@ -44,7 +43,6 @@ from pyclick.search_session.SearchResult import SearchResult as pyclick_SearchRe
 from pyclick.search_session.SearchSession import SearchSession as pyclick_SearchSession
 
 from create_tasks import Action, LogItem
-from fields import orig_query, rel_column
 
 
 DEBUG = False
@@ -162,29 +160,7 @@ class RelContainer:
     def __nonzero__(self):
         return len(self.Ds) > 0 and len(self.Rs) > 0
 
-
-SNIPPET_CLASSES = [
-    frozenset([u'g']),
-    frozenset([u'_oqc', u'g']),
-    frozenset([u'g', u'g-blk', u'kno-kp', u'mnr-c']),
-    frozenset([u'g', u'g-blk', u'mnr-c', u'rhsvw']),
-    frozenset([u'g', u'g-blk', u'kno-kp', u'mnr-c', u'rhsvw']),
-    frozenset([u'g',
-            u'g-blk',
-            u'kno-fb-suppressed',
-            u'kno-kp',
-            u'mnr-c',
-            u'rhsvw']),
-    frozenset([u'_Nn', u'_wbb', u'card-section', u'g']),
-    frozenset([u'_df', u'_mZd', u'card-section', u'g']),
-    frozenset([u'_Abb', u'_Nn', u'card-section', u'g']),
-    frozenset([u'currency', u'g', u'obcontainer', u'vk_c'])
-]
-
-
-# Reserve one feature for the intercept.
-CLASSES_TO_FEATURE_NUM = dict((c, 2 + k) for k, c in enumerate(SNIPPET_CLASSES))
-
+NUM_ITEM_TYPES = 10
 
 MAX_OFFSET_TOP = 1869
 MIN_WIDTH = 338
@@ -197,6 +173,12 @@ LogLikelihood = collections.namedtuple('LogLikelihood', ['full',
                                                          'gaussian',
                                                          'clicks',
                                                          'sat']
+)
+
+
+Snippet = collections.namedtuple('Snippet', ['emup',
+                                             'cas_item_type',
+                                             'is_complex']
 )
 
 
@@ -425,7 +407,7 @@ class uUBM(UserModel):
 ################################################################################
 
 class CAS(UserModel):
-    num_features_epsilon = 1 + len(SNIPPET_CLASSES) + 1 + 5               # 0'th coefficient is intercept
+    num_features_epsilon = 1 + NUM_ITEM_TYPES + 1 + 5               # 0'th coefficient is intercept
     num_features_alpha = 1 + RelContainer.grades_R                        # 0'th coefficient is intercept
     num_tau_D = RelContainer.grades_D
     num_tau_R = RelContainer.grades_R
@@ -479,10 +461,10 @@ class CAS(UserModel):
         else:
             w_e = np.ones(self.num_features_epsilon)
             if not self.use_class:
-                for idx in xrange(2, 2 + len(SNIPPET_CLASSES)):
+                for idx in xrange(2, 2 + NUM_ITEM_TYPES):
                     w_e[idx] = 0
             if not self.use_geometry:
-                for idx in xrange(2 + len(SNIPPET_CLASSES), self.num_features_epsilon):
+                for idx in xrange(2 + NUM_ITEM_TYPES, self.num_features_epsilon):
                     w_e[idx] = 0
 
         w_a = np.ones(self.num_features_alpha)
@@ -534,11 +516,12 @@ class CAS(UserModel):
 
         if not self.trec_style:
             if self.use_class:
-                classes = frozenset(snippet['class'])
-                features[CLASSES_TO_FEATURE_NUM[classes]] = 1
+                item_type = int(snippet.cas_item_type[2:])
+                assert item_type >= 0 and item_type < NUM_ITEM_TYPES
+                features[2 + item_type] = 1
             if self.use_geometry:
-                geom_features_start_index = 2 + len(SNIPPET_CLASSES)
-                _, _, offset_top, width, height = [int(d) for d in snippet['emup'].split(';')]
+                geom_features_start_index = 2 + NUM_ITEM_TYPES
+                _, _, offset_top, width, height = [int(d) for d in snippet.emup.split(';')]
                 features[geom_features_start_index] = 1 if second_column else 0
                 features[geom_features_start_index + 1] = offset_top / MAX_OFFSET_TOP
                 features[geom_features_start_index + 2] = (width - MIN_WIDTH) / (MAX_WIDTH - MIN_WIDTH)
@@ -557,7 +540,7 @@ class CAS(UserModel):
         offset_parent_set = set()
         exam_features = []
         for log_item, snippet in zip(session, serp):
-            offset_parent = snippet['emup'].split(';')[0]
+            offset_parent = snippet.emup.split(';', 1)[0]
             new_column = offset_parent_set and (offset_parent not in offset_parent_set)
             offset_parent_set.add(offset_parent)
             assert len(offset_parent_set) <= 2, (serp, session)
@@ -743,8 +726,8 @@ class CAS(UserModel):
         print 'weight_epsilon:'
         print '\tintercept:', epsilon[0]
         print '\trank feature:', epsilon[1]
-        print '\tclass features:', epsilon[2:(2 + len(SNIPPET_CLASSES))]
-        print '\tgeom features:', epsilon[(2 + len(SNIPPET_CLASSES)):]
+        print '\tclass features:', epsilon[2:(2 + NUM_ITEM_TYPES)]
+        print '\tgeom features:', epsilon[(2 + NUM_ITEM_TYPES):]
 
         print 'weight_alpha', cls.weight_alpha(theta)
         print '\talpha(R): {%s}' % ', '.join(
@@ -766,20 +749,17 @@ if __name__ == '__main__':
     parser.add_argument('--results_D',
             help='CSV file with results for direct snippet relevance',
             required=True)
-    parser.add_argument('--results_AR',
-            help='CSV file with results for attractiveness and doc relevance',
-            required=True, action='append')
+    parser.add_argument('--results_R',
+            help='CSV file with results for the full doc relevance',
+            required=True)
     parser.add_argument('--spammers',
-            help='File with ids of malicious workers (one per line)',
-            action='append')
+            help='File with ids of malicious workers (one per line)')
     args = parser.parse_args()
 
     spammers = set()
-    if args.spammers is not None:
-        for s_file_name in args.spammers:
-            with open(s_file_name) as f:
-                for worker_id in f:
-                    spammers.add(worker_id.rstrip())
+    with open(args.spammers) as f:
+        for worker_id in f:
+            spammers.add(worker_id.rstrip())
 
     print '%d spammers' % len(spammers)
 
@@ -790,26 +770,25 @@ if __name__ == '__main__':
         for row in csv.DictReader(results_D):
             # TODO: vary threshold to mark someone as a spammer and see
             #       how the end result changes
-            if row['_worker_id'] not in spammers:
-                trust = float(row['_trust']) if USE_CF_TRUST else 1
-                log_id = row['log_id']
-                RelContainer.add_rel(log_id_to_rel[log_id].Ds, row[rel_column['D']], trust)
-                log_id_to_query[log_id] = row[orig_query['D']]
+            if row['cas_worker_id'] not in spammers:
+                trust = float(row['cf_worker_trust']) if USE_CF_TRUST else 1
+                log_id = row['cas_log_id']
+                RelContainer.add_rel(log_id_to_rel[log_id].Ds, row['D'], trust)
+                log_id_to_query[log_id] = row['cas_query_id']
 
-    for result_AR in args.results_AR:
-        with open(result_AR) as results_AR:
-            for row in csv.DictReader(results_AR):
-                if row['_worker_id'] not in spammers:
-                    trust = float(row['_trust']) if USE_CF_TRUST else 1
-                    log_id = row['log_id']
-                    RelContainer.add_rel(log_id_to_rel[log_id].Rs, row[rel_column['R']], trust)
-                    query = row[orig_query['R']]
-                    old_query = log_id_to_query.setdefault(log_id, query)
-                    if old_query != query:
-                        print >>sys.stderr, ('The same log_id '
-                                '(%s) maps to two different queries: [%s] and [%s]' % (
-                                        log_id, old_query, query))
-                        sys.exit(1)
+    with open(args.results_R) as results_R:
+        for row in csv.DictReader(results_R):
+            if row['cas_worker_id'] not in spammers:
+                trust = float(row['cf_worker_trust']) if USE_CF_TRUST else 1
+                log_id = row['cas_log_id']
+                RelContainer.add_rel(log_id_to_rel[log_id].Rs, row['R'], trust)
+                query = row['cas_query_id']
+                old_query = log_id_to_query.setdefault(log_id, query)
+                if old_query != query:
+                    print >>sys.stderr, ('The same log_id '
+                            '(%s) maps to two different queries: [%s] and [%s]' % (
+                                    log_id, old_query, query))
+                    sys.exit(1)
 
     print '%d items with complete relevance' % sum(
             1 for r in log_id_to_rel.itervalues() if r)
@@ -825,12 +804,12 @@ if __name__ == '__main__':
         num_total = 0
         reader = csv.DictReader(task_file)
         for key, query_rows_iter in itertools.groupby(reader,
-                        key=lambda row: (row['log_id'].split('_')[:-1], # SERP id
-                                         row[orig_query['query']],
+                        key=lambda row: (row['cas_log_id'].split('_')[:-1], # SERP id
+                                         row['cas_query_id'],
                                          row['sat_feedback'])):
             sat = key[2]
             if DEBUG and sat == 'undefined':
-                print >>sys.stderr, 'Undefined sat label for query [%s]' % query
+                print >>sys.stderr, 'Undefined sat label for query [%s]' % key[1]
             sat_labels.append(sat)
             sat = parse_sat(sat)
             if sat is None:
@@ -841,8 +820,9 @@ if __name__ == '__main__':
             data_row = {'query': key[1], 'sat': sat, 'session': [], 'serp': []}
             for row in query_rows_iter:
                 data_row['session'].append(jsonpickle.decode(row['actions']))
-                data_row['serp'].append(
-                        bs4.BeautifulSoup(row['snippet'], 'html.parser').li)
+                data_row['serp'].append(Snippet(emup=row['emup'],
+                                                cas_item_type=row['cas_item_type'],
+                                                is_complex=row['is_complex']))
             data.append(data_row)
             num_total += 1
         #print collections.Counter(sat_labels)
@@ -869,6 +849,7 @@ if __name__ == '__main__':
         test_data = data[test_index]
         result = {}
         for name, model in MODELS.iteritems():
+            print >>sys.stderr, 'Starting training', name
             params = model.train(train_data)
             ll_values_test = [
                     model.log_likelihood(params,
@@ -884,4 +865,4 @@ if __name__ == '__main__':
                     [int(d['sat']) for d in test_data],
                     [model.utility(params, d['session'], d['serp']) for d in test_data]
             )[0]
-        print name, result
+        print result
