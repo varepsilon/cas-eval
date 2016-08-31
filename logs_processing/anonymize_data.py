@@ -42,23 +42,23 @@ class DynamicIDs:
 
 
 def process_results_file(worker_to_id, query_to_id, in_files, out_file, rel_type):
-    for in_file in in_files:
-        with open(in_file) as results:
-            with open(out_file, 'w') as results_anonymized:
-                results_writer = csv.DictWriter(results_anonymized,
-                                                  fieldnames=['cas_query_id',
-                                                              'cas_log_id',
-                                                              'cas_worker_id',
-                                                              'cf_worker_trust',
-                                                              rel_type])
-                results_writer.writeheader()
-                for row in csv.DictReader(results):
-                    results_writer.writerow({'cas_worker_id': worker_to_id[row['_worker_id']],
-                                             'cf_worker_trust': row['_trust'],
-                                             'cas_query_id': query_to_id[row[orig_query[rel_type]]],
-                                             'cas_log_id': row['log_id'],
-                                             rel_type: row[rel_column[rel_type]],
-                                            })
+    with open(out_file, 'w') as results_anonymized:
+        results_writer = csv.DictWriter(results_anonymized,
+                                          fieldnames=['cas_query_id',
+                                                      'cas_log_id',
+                                                      'cas_worker_id',
+                                                      'cf_worker_trust',
+                                                      rel_type])
+        results_writer.writeheader()
+        for in_file in in_files:
+            with open(in_file) as results:
+                    for row in csv.DictReader(results):
+                        results_writer.writerow({'cas_worker_id': worker_to_id[row['_worker_id']],
+                                                 'cf_worker_trust': row['_trust'],
+                                                 'cas_query_id': query_to_id[row[orig_query[rel_type]]],
+                                                 'cas_log_id': row['log_id'],
+                                                 rel_type: row[rel_column[rel_type]],
+                                                })
 
 
 if __name__ == '__main__':
