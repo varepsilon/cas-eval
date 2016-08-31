@@ -88,7 +88,7 @@ if __name__ == '__main__':
             default='results_R_anonymized.csv')
     parser.add_argument('--out_spammers',
             help='File to output the anonymized list of spammers',
-            default='spammers_anonymized.csv')
+            default='spammers_anonymized.txt')
 
     args = parser.parse_args()
 
