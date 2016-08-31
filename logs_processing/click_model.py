@@ -854,6 +854,7 @@ if __name__ == '__main__':
 
     MODELS = {
         'CAS': CAS(log_id_to_rel),
+        'PBM': PyClickModel('PBM', log_id_to_rel),
         'CASnod': CAS(log_id_to_rel, use_D=False),
         'CASnosat': CAS(log_id_to_rel, sat_term_weight=0),
         'CASnoreg': CAS(log_id_to_rel, reg_coeff=0),
@@ -881,36 +882,24 @@ if __name__ == '__main__':
                     return True
         return False
 
-    def compute_performance(index, train_data, test_data):
+    for train_index, test_index in sklearn.cross_validation.ShuffleSplit(N, n_iter=1, random_state=42):
+        train_data = data[train_index]
+        test_data = data[test_index]
         result = {}
         for name, model in MODELS.iteritems():
-            try:
-                params = model.train(train_data)
-                result[name] = {}
-                result[name]['index'] = index
-                result[name]['sat'] = [int(d['sat']) for d in test_data if is_complex(d['serp'])]
-                result[name]['utility'] = [
-                        model.utility(params, d['session'], d['serp']) for d in test_data if is_complex(d['serp'])]
-            except Exception, e:
-                print >>sys.stderr, sys.exc_info()
-        d = pd.DataFrame(result)
-        d.to_pickle('out_heterogeneous/%d.df' % (index))
-
-
-    N_REPETITIONS_COMPLEX = 20
-    N = len(data)
-    data = np.array(data)
-
-    workers = []
-
-    complex_serps = [is_complex(x['serp']) for x in data]
-    for rep_index, (train_index, test_index) in enumerate(sklearn.cross_validation.StratifiedShuffleSplit(
-            complex_serps, N_REPETITIONS_COMPLEX, test_size=1/24, random_state=0)):
-            w = multiprocessing.Process(target=compute_performance,
-                        args=(rep_index, data[train_index], data[test_index]))
-            workers.append(w)
-            w.start()
-
-    for w in workers:
-        w.join()
-
+            params = model.train(train_data)
+            ll_values_test = [
+                    model.log_likelihood(params,
+                                         d['session'], d['serp'], d['sat'],
+                                         f_only=True
+                    ) for d in test_data
+            ]
+            result[name] = {}
+            result[name]['full'] = np.average([l.full for l in ll_values_test])
+            result[name]['click'] = np.average([l.clicks for l in ll_values_test])
+            result[name]['sat'] = np.average([l.sat for l in ll_values_test])
+            result[name]['sat pearson'] = scipy.stats.pearsonr(
+                    [int(d['sat']) for d in test_data],
+                    [model.utility(params, d['session'], d['serp']) for d in test_data]
+            )[0]
+        print name, result
