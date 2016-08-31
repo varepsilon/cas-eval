@@ -552,7 +552,8 @@ class CAS(UserModel):
     def _exam_features_serp(self, session, serp):
         """ Compute exam features for the whole serp/session. """
         rank = 0
-        # Track offset parents to identify which column the snippet is located in.
+        # Track emu_id's of the "offset parents" to identify which column the snippet is located in.
+        # "offset parent" is a reference DOM elements used to specify offset. See third_party/EMU
         offset_parent_set = set()
         exam_features = []
         for log_item, snippet in zip(session, serp):
