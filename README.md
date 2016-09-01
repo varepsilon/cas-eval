@@ -41,5 +41,14 @@ pip install -t logs_management/lib Flask GoogleAppEngineCloudStorageClient Werkz
   
 ### Logs Processing / Data Analysis
 * Scientific Python stack: NumPy, SciPy, Pandas, scikit-learn, Matplotlib, Seaborn
-* jsonpickle, BeautifulSoup4
+* [Jupyter / iPython](http://jupyter.org/)
+* jsonpickle
+* [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/) (not needed if working with [the anonymized dataset](http://ilps.science.uva.nl/resources/cas-eval/))
 * [PyClick](https://github.com/markovi/PyClick)
+
+
+## Quick Start
+If you want to just play with the data do the following:
+  * install the requirements for data analysis (see above)
+  * download [the anonymized dataset](http://ilps.science.uva.nl/resources/cas-eval/)
+  * launch `jupyter notebook` from the project directory, open [localhost:8888](http://localhost:8888) in your browser and navigate to `data_analysis/Results.ipynb`
