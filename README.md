@@ -1,7 +1,7 @@
 ## Project Description
 This code is released to complement the following publication
 
-*Chuklin, A. and de Rijke, M. 2016. Incorporating Clicks, Attention and Satisfaction into a Search Engine Result Page Evaluation Model. CIKM (2016).*
+[*Chuklin, A. and de Rijke, M. 2016. Incorporating Clicks, Attention and Satisfaction into a Search Engine Result Page Evaluation Model. CIKM (2016).*](https://research.google.com/pubs/archive/45562.pdf)
 
 This is not an official Google product.
 
